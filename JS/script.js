@@ -102,7 +102,9 @@ class Character{
         if (page == 'town'){
             const { x: x, y: y } = this.getState()
             if (x<=250 && y>=180){
-                console.log(x,y)
+                page = 'shop'
+                data.setItem('page','shop')
+                renderer.drawShop()
             }
         }
     }
@@ -273,9 +275,18 @@ class CanvasRenderer {
         new Txt('Finally we will determine your starting gold by rolling and adding 20 6-sided dice',500,270)]
         this.nextButton = new Button(450,500,'Next')
         this.statButtons = storage.load('statButtons')
+        this.displayedShopItems = data.getItem('displayedShopItems')
+        if (this.displayedShopItems == null){
+            this.displayedShopItems = 'weapons'
+            data.setItem('displayedShopItems','weapons')
+        }
+        this.weapons = [daggerImg(), sharpSwordImg(), morningstarImg(), longSwordImg(), battleAxeImg(), greatSwordImg()]
+        this.potions = [healthPotionImg()]
+        this.armor = [clothArmorImg(), leatherArmorImg(), studdedLeatherArmorImg(), scaleMailArmorImg(), chainMailArmorImg(), plateMailArmorImg()]
         this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110)]
         this.backButton = new Button(470,500,'Back',60)
         this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125), new Button(450,290,"Settings")]
+        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armor")]
         if (this.statButtons == null){
             this.statButtons = [new Button(180,300,'Strength',150),new Button(340,300,'Intelligence',150),new Button(500,300,'Dexterity',150),
             new Button(660,300,'Constitution',150),new Button(255,340,'Wisdom',150),new Button(415,340,'Perception',150),new Button(575,340,'Charisma',150)]
@@ -350,7 +361,18 @@ class CanvasRenderer {
         this.backButton.draw()
     }
     drawShop(){
-
+        drawRect('#007d00',0,0,1000,600)
+        for (let i=0; i<this.shopButtons.length; i++){this.shopButtons[i].draw()}
+        this.backButton.draw()
+        for (let i=0; i<this[this.displayedShopItems.toLowerCase()].length; i++){
+            var y = 0
+            var x = i*200
+            if(x>400){
+                y = 200
+                x -= 600
+            }
+            ctx.drawImage(this[this.displayedShopItems.toLowerCase()][i], x, y+100)
+        }
     }
 }
 class MainLoop {
@@ -456,10 +478,10 @@ player.on('state:change', (state) => {
 })
 
 window.addEventListener('keydown', (e) => {
-    if (page == 'town'){controls.keyChange(e.key, true)}
+    if (page == 'town' || page == 'dungeon'){controls.keyChange(e.key, true)}
 })
 window.addEventListener('keyup', (e) => {
-    if (page == 'town'){controls.keyChange(e.key, false)}
+    if (page == 'town' || page == 'shop' || page == 'dungeon'){controls.keyChange(e.key, false)}
 })
 window.addEventListener('click',function(e){
     if (inSettings == true){
@@ -600,6 +622,20 @@ window.addEventListener('click',function(e){
             }
         }
     }
+    else if (page == 'shop'){
+        const clicked = renderer.backButton.wasClicked(e)
+        if (clicked == true){
+            page = 'town'
+            data.setItem('page','town')
+            renderer.drawTown({x: player.getState().x, y: player.getState().y })
+        }
+        const typeClicked = renderer.shopButtons.find((b) => b.wasClicked(e))
+        if (typeClicked != undefined){
+            renderer.displayedShopItems = typeClicked.text.toLowerCase()
+            data.setItem('displayedShopItems',typeClicked.text.toLowerCase())
+            renderer.drawShop()
+        }
+    }
     else if (page == 'town'){
         const clicked = renderer.mainButtons.find((b) => b.wasClicked(e))
         if (clicked != undefined){
@@ -614,9 +650,6 @@ window.addEventListener('click',function(e){
                 renderer.drawInventory()
             }
         }
-    }
-    else if (page == 'shop'){
-
     }
 })
 if (inInstructions == true){
@@ -642,10 +675,15 @@ else if (page == 'character setup'){
 }
 else if (page == 'town'){
     renderer.drawTown({x:player.getState().x,y:player.getState().y})
-    setTimeout(() => {renderer.drawTown({x:player.getState().x,y:player.getState().y})},100)
+    for (let i=0; i<100; i++){
+        setTimeout(() => {renderer.drawTown({x:player.getState().x,y:player.getState().y})},i*10)
+    }
 }
 else if (page == 'shop'){
     renderer.drawShop()
+    for (let i=0; i<100; i++){
+        setTimeout(() => {renderer.drawShop()},i*10)
+    }
 }
 setInterval(() => {
     if (page == 'town' || page == 'dungeon'){
@@ -658,4 +696,3 @@ function Run(){
     requestAnimationFrame(Run)
 }
 Run()
-//data.clear()
