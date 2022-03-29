@@ -1,4 +1,5 @@
-import { heroImg, moneyBagImg, manImg, shopImg, chatImg } from './images.js'
+import { heroImg, moneyBagImg, manImg, shopImg, chatImg, armorImg, battleAxeImg, chainMailArmorImg, clothArmorImg, daggerImg, fistImg, greatSwordImg, healthPotionImg,
+leatherArmorImg, longSwordImg, morningstarImg, plateMailArmorImg, scaleMailArmorImg, sharpSwordImg, studdedLeatherArmorImg } from './images.js'
 class Character{
     #id;
     #state = {};
@@ -54,22 +55,67 @@ class Character{
     }
 
     moveUp(n = this.#defaultMoveN) {
-        if(this.#state.y>0){this.setState({ y: this.#state.y - n })}
+        if (page == 'town'){
+            if(this.#state.y>0){this.setState({ y: this.#state.y - n })}
+            if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
+                this.setState({ y: this.#state.y + n })
+            }
+            if (this.#state.x<=250 && this.#state.y>=180){
+                new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
+            }
+        }
     }
 
     moveDown(n = this.#defaultMoveN) {
-        if(this.#state.y<525){this.setState({ y: this.#state.y + n })}
+        if (page == 'town'){
+            if(this.#state.y<525){this.setState({ y: this.#state.y + n })}
+            if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
+                this.setState({ y: this.#state.y - n })
+            }
+            if (this.#state.x<=250 && this.#state.y>=180){
+                new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
+            }
+        }
     }
 
     moveRight(n = this.#defaultMoveN) {
-        if(this.#state.x<925){this.setState({ x: this.#state.x + n })}
+        if (page == 'town'){
+            if(this.#state.x<925){this.setState({ x: this.#state.x + n })}
+            if (this.#state.x<=250 && this.#state.y>=180){
+                new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
+            }
+        }
     }
 
     moveLeft(n = this.#defaultMoveN) {
-        if(this.#state.x>0){this.setState({ x: this.#state.x - n })}
+        if (page == 'town'){
+            if(this.#state.x>0){this.setState({ x: this.#state.x - n })}
+            if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
+                this.setState({ x: this.#state.x + n })
+            }
+            if (this.#state.x<=250 && this.#state.y>=180){
+                new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
+            }
+        }
+    }
+    interact(){
+        if (page == 'town'){
+            const { x: x, y: y } = this.getState()
+            if (x<=250 && y>=180){
+                console.log(x,y)
+            }
+        }
     }
     assignAttr(attr,value){
+        const bonus = attr+'Bonus'
         this.setState({ [attr]: value})
+        if (value<=5){this.setState({ [bonus]: -3})}
+        else if(value<=7){this.setState({ [bonus]: -2})}
+        else if(value<=9){this.setState({ [bonus]: -1})}
+        else if(value<=11){this.setState({ [bonus]: 0})}
+        else if(value<=13){this.setState({ [bonus]: 1})}
+        else if(value<=15){this.setState({ [bonus]: 2})}
+        else if(value<=18){this.setState({ [bonus]: 3})}
     }
 }
 class Controls {
@@ -78,6 +124,7 @@ class Controls {
         's': 'down',
         'a': 'left',
         'd': 'right',
+        'e': 'interact'
     }
     #controlsActive = {}
     #eventHandlers = []
@@ -118,7 +165,6 @@ class Controls {
             .forEach(handler => handler.fn(data))
     }  
 }
-
 const data = window.localStorage
 function drawRect(color,x,y,width,height){
     ctx.fillStyle = color
@@ -227,6 +273,9 @@ class CanvasRenderer {
         new Txt('Finally we will determine your starting gold by rolling and adding 20 6-sided dice',500,270)]
         this.nextButton = new Button(450,500,'Next')
         this.statButtons = storage.load('statButtons')
+        this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110)]
+        this.backButton = new Button(470,500,'Back',60)
+        this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125), new Button(450,290,"Settings")]
         if (this.statButtons == null){
             this.statButtons = [new Button(180,300,'Strength',150),new Button(340,300,'Intelligence',150),new Button(500,300,'Dexterity',150),
             new Button(660,300,'Constitution',150),new Button(255,340,'Wisdom',150),new Button(415,340,'Perception',150),new Button(575,340,'Charisma',150)]
@@ -251,6 +300,9 @@ class CanvasRenderer {
         ctx.drawImage(manImg(),75,440)
         ctx.drawImage(chatImg(),100,400)
         ctx.drawImage(moneyBagImg(),105,400)
+        new Txt(player.getState().hp+"/"+player.getState().max_hp,185,2,'#000000',20).draw()
+        new Txt("Gold -- "+player.getState().gold,60,30).draw()
+        for (let i=0; i<this.mainButtons.length; i++){this.mainButtons[i].draw()}
     }
     drawMainMenu(){
         drawRect('#007d00',0,0,1000,600)
@@ -279,6 +331,26 @@ class CanvasRenderer {
                 mainText[i].draw()
             }
         }
+    }
+    drawInstructions(){
+        drawRect('#007d00',0,0,1000,600)
+        this.backButton.draw()
+    }
+    drawMenu(){
+        drawRect('#007d00',0,0,1000,600)
+        drawRect('#7d7d7d',432.5,200,135,200)
+        for (let i=0;i<this.menuButtons.length;i++){this.menuButtons[i].draw()}
+    }
+    drawSettings(){
+        drawRect('#007d00',0,0,1000,600)
+        this.backButton.draw()
+    }
+    drawInventory(){
+        drawRect('#007d00',0,0,1000,600)
+        this.backButton.draw()
+    }
+    drawShop(){
+
     }
 }
 class MainLoop {
@@ -339,7 +411,6 @@ if (mainText == null){
     new Txt('Where would you like to assign your value of '+roll.total,500,60)]
     storage.saveText(mainText)
 }
-
 else{
     const array = []
     for (let i=0; i<mainText.length; i++){
@@ -347,6 +418,21 @@ else{
         array.push(txt)
     }
     mainText = array
+}
+
+var inInstructions = JSON.parse(data.getItem('inInstructions'))
+var inMenu = JSON.parse(data.getItem('inMenu'))
+var inSettings = JSON.parse(data.getItem('inSettings'))
+var inInventory = JSON.parse(data.getItem('inInventory'))
+if (inInstructions == null){
+    inInstructions = false
+    inMenu = false
+    inSettings = false
+    inInventory = false
+    data.setItem('inInstructions',false)
+    data.setItem('inSettings', false)
+    data.setItem('inMenu',false)
+    data.setItem('inInventory',false)
 }
 
 if (!player.coords.x || !player.coords.y) {
@@ -360,6 +446,7 @@ controls.on('up', () => player.moveUp())
 controls.on('down', () => player.moveDown())
 controls.on('left', () => player.moveLeft())
 controls.on('right', () => player.moveRight())
+controls.on('interact', () => player.interact())
 
 // Setup graphics renderer & animation events
 const renderer = new CanvasRenderer()
@@ -375,7 +462,55 @@ window.addEventListener('keyup', (e) => {
     if (page == 'town'){controls.keyChange(e.key, false)}
 })
 window.addEventListener('click',function(e){
-    if(page == 'start'){
+    if (inSettings == true){
+        const clicked = renderer.backButton.wasClicked(e)
+        if (clicked == true){
+            inSettings = false
+            data.setItem('inSettings',false)
+            if (page == 'town'){renderer.drawMenu()}
+            else{renderer.drawMainMenu()}
+        }
+    }
+    else if (inInstructions == true){
+        const clicked = renderer.backButton.wasClicked(e)
+        if (clicked == true){
+            inInstructions = false
+            data.setItem('inInstructions',false)
+            if (page == 'town'){renderer.drawMenu()}
+            else{renderer.drawMainMenu()}
+        }
+    }
+    else if (inMenu == true){
+        const clicked = renderer.menuButtons.find((b) => b.wasClicked(e))
+        if (clicked != undefined){
+            if (clicked.text == 'Resume'){
+                inMenu = false
+                data.setItem("inMenu",false)
+                if (page == 'town'){renderer.drawTown({x:player.getState().x, y:player.getState().y})}
+                else{renderer.drawDungeon()}
+            }
+            if (clicked.text == 'Instructions'){
+                inInstructions = true
+                data.setItem('inInstructions',true)
+                renderer.drawInstructions()
+            }
+            if (clicked.text == 'Settings'){
+                inSettings = true
+                data.setItem('inSettings',true)
+                renderer.drawSettings()
+            }
+        }
+    }
+    else if (inInventory == true){
+        const clicked = renderer.backButton.wasClicked(e)
+        if (clicked == true){
+            inInventory = false
+            data.setItem('inInventory',false)
+            if (page == 'town'){renderer.drawTown({x: player.getState().x, y: player.getState().y})}
+            else{renderer.drawDungeon()}
+        }
+    }
+    else if(page == 'start'){
         const clicked = renderer.mainMenuButtons.find((b) => b.wasClicked(e))
         if (clicked != undefined){
             if (clicked.text == 'Play'){
@@ -383,9 +518,19 @@ window.addEventListener('click',function(e){
                 data.setItem('page',page)
                 renderer.drawSetup()
             }
+            if (clicked.text == 'Instructions'){
+                inInstructions = true
+                data.setItem('inInstructions',true)
+                renderer.drawInstructions()
+            }
+            if (clicked.text == 'Settings'){
+                inSettings = true
+                data.setItem('inSettings',true)
+                renderer.drawSettings()
+            }
         }
     }
-    if(page == 'character setup'){
+    else if(page == 'character setup'){
         if(step != 2){
             const clicked = renderer.nextButton.wasClicked(e)
             if (clicked == true){
@@ -455,19 +600,52 @@ window.addEventListener('click',function(e){
             }
         }
     }
-})
+    else if (page == 'town'){
+        const clicked = renderer.mainButtons.find((b) => b.wasClicked(e))
+        if (clicked != undefined){
+            if (clicked.text == 'Menu'){
+                inMenu = true
+                data.setItem('inMenu',true)
+                renderer.drawMenu()
+            }
+            if (clicked.text == 'Inventory'){
+                inInventory = true
+                data.setItem('inInventory',true)
+                renderer.drawInventory()
+            }
+        }
+    }
+    else if (page == 'shop'){
 
-if (page == 'start'){
+    }
+})
+if (inInstructions == true){
+    renderer.drawInstructions()
+}
+else if (inSettings == true){
+    renderer.drawSettings()
+}
+else if (inInventory == true){
+    renderer.drawInventory()
+}
+else if(inMenu == true){
+    renderer.drawMenu()
+}
+else if (page == 'start'){
     renderer.drawMainMenu()
 }
-if (page == 'character setup'){
+else if (page == 'character setup'){
     if (step == 5){
         renderer.nextButton.text = 'Begin'
     }
     renderer.drawSetup()
 }
-if (page == 'town'){
+else if (page == 'town'){
+    renderer.drawTown({x:player.getState().x,y:player.getState().y})
     setTimeout(() => {renderer.drawTown({x:player.getState().x,y:player.getState().y})},100)
+}
+else if (page == 'shop'){
+    renderer.drawShop()
 }
 setInterval(() => {
     if (page == 'town' || page == 'dungeon'){
