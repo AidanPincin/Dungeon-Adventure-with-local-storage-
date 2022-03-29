@@ -1,4 +1,4 @@
-import { heroImg, moneyBagImg, manImg, shopImg, chatImg } from '../Images/images.js'
+import { heroImg, moneyBagImg, manImg, shopImg, chatImg } from './images.js'
 class Character{
     #id;
     #state = {};
