@@ -282,11 +282,18 @@ class CanvasRenderer {
         }
         this.weapons = [daggerImg(), sharpSwordImg(), morningstarImg(), longSwordImg(), battleAxeImg(), greatSwordImg()]
         this.potions = [healthPotionImg()]
-        this.armor = [clothArmorImg(), leatherArmorImg(), studdedLeatherArmorImg(), scaleMailArmorImg(), chainMailArmorImg(), plateMailArmorImg()]
+        this.armors = [clothArmorImg(), leatherArmorImg(), studdedLeatherArmorImg(), scaleMailArmorImg(), chainMailArmorImg(), plateMailArmorImg()]
+        this.weaponInfo = [new ShopItemInfo(145,75,'Dagger','Damage','1-6',5), new ShopItemInfo(445,75,"Sharp Sword",'Damage','1-10',10),
+        new ShopItemInfo(745,75,"Morningstar",'Damage','2-12',20), new ShopItemInfo(145,350,"Long Sword","Damage","3-18",50),
+        new ShopItemInfo(445,350,"Battle Axe",'Damage','4-24',125), new ShopItemInfo(745,350,'Great Sword','Damage','5-30',250)]
+        this.potionInfo = [new ShopItemInfo(145,75,"Healing Potion(3)","Heals","5-30HP",15)]
+        this.armorInfo = [new ShopItemInfo(145,75,'Cloth Armor','Armor Class',10,30), new ShopItemInfo(445,75,'Leather Armor','Armor Class',11,60),
+        new ShopItemInfo(745,75,'Studded Leather Armor','Armor Class',12,90), new ShopItemInfo(145,350,"Scale Mail Armor","Armor Class",13,200),
+        new ShopItemInfo(445,350,"Chain Mail Armor","Armor Class",14,400), new ShopItemInfo(745,350,'Plate Mail Armor','Armor Class',15,800)]
         this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110)]
         this.backButton = new Button(470,500,'Back',60)
         this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125), new Button(450,290,"Settings")]
-        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armor")]
+        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armors"), new Button(890,360,"Back")]
         if (this.statButtons == null){
             this.statButtons = [new Button(180,300,'Strength',150),new Button(340,300,'Intelligence',150),new Button(500,300,'Dexterity',150),
             new Button(660,300,'Constitution',150),new Button(255,340,'Wisdom',150),new Button(415,340,'Perception',150),new Button(575,340,'Charisma',150)]
@@ -363,16 +370,20 @@ class CanvasRenderer {
     drawShop(){
         drawRect('#007d00',0,0,1000,600)
         for (let i=0; i<this.shopButtons.length; i++){this.shopButtons[i].draw()}
-        this.backButton.draw()
         for (let i=0; i<this[this.displayedShopItems.toLowerCase()].length; i++){
             var y = 0
-            var x = i*200
-            if(x>400){
-                y = 200
-                x -= 600
+            var x = i*300
+            if(x>600){
+                y = 275
+                x -= 900
             }
-            ctx.drawImage(this[this.displayedShopItems.toLowerCase()][i], x, y+100)
+            ctx.drawImage(this[this.displayedShopItems.toLowerCase()][i], x+100, y+75)
         }
+        const info = this.displayedShopItems.toLowerCase().slice(0,this.displayedShopItems.length-1)+'Info'
+        for (let i=0; i<this[info].length; i++){
+            this[info][i].draw()
+        }
+        new Txt("Gold -- "+player.getState().gold,850,0).draw()
     }
 }
 class MainLoop {
@@ -383,6 +394,19 @@ class MainLoop {
 
     run() {
         this.#controls.processInputs()
+    }
+}
+class ShopItemInfo{
+    constructor(x,y,name,type,range,cost){
+        this.x = x
+        this.y = y
+        this.info = [new Txt(name,x,y-40,'#000000',30),new Txt(type+" -- "+range,x,y+100),new Txt("Cost -- "+cost,x,y+130)]
+        this.cost = cost
+        this.buyButton = new Button(x-30,y+160,'Buy',60)
+    }
+    draw(){
+        for (let i=0;i<this.info.length;i++){this.info[i].draw()}
+        this.buyButton.draw()
     }
 }
 
@@ -623,17 +647,18 @@ window.addEventListener('click',function(e){
         }
     }
     else if (page == 'shop'){
-        const clicked = renderer.backButton.wasClicked(e)
-        if (clicked == true){
-            page = 'town'
-            data.setItem('page','town')
-            renderer.drawTown({x: player.getState().x, y: player.getState().y })
-        }
-        const typeClicked = renderer.shopButtons.find((b) => b.wasClicked(e))
-        if (typeClicked != undefined){
-            renderer.displayedShopItems = typeClicked.text.toLowerCase()
-            data.setItem('displayedShopItems',typeClicked.text.toLowerCase())
-            renderer.drawShop()
+        const clicked = renderer.shopButtons.find((b) => b.wasClicked(e))
+        if (clicked != undefined){
+            if (clicked.text == 'Back'){
+                page = 'town'
+                data.setItem('page','town')
+                renderer.drawTown({x: player.getState().x, y: player.getState().y })
+            }
+            else{
+                renderer.displayedShopItems = clicked.text.toLowerCase()
+                data.setItem('displayedShopItems',clicked.text.toLowerCase())
+                renderer.drawShop()
+            }
         }
     }
     else if (page == 'town'){
