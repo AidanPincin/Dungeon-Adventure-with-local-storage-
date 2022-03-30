@@ -23,6 +23,7 @@ const PlateMailArmorImg = image('Images/plate-mail-armor.png')
 const ScaleMailArmorImg = image('Images/scale-mail-armor.png')
 const SharpSwordImg = image('Images/sharpsword.png')
 const StuddedLeatherArmorImg = image('Images/studded-leather-armor.png')
+const PathImg = image('Images/path.png')
 export function heroImg(){return HeroImg}
 export function chatImg(){return ChatImg}
 export function shopImg(){return ShopImg}
@@ -43,3 +44,4 @@ export function scaleMailArmorImg(){return ScaleMailArmorImg}
 export function sharpSwordImg(){return SharpSwordImg}
 export function studdedLeatherArmorImg(){return StuddedLeatherArmorImg}
 export function armorImg(){return ArmorImg}
+export function pathImg(){return PathImg}
