@@ -1,5 +1,6 @@
 import { heroImg, moneyBagImg, manImg, shopImg, chatImg, armorImg, battleAxeImg, chainMailArmorImg, clothArmorImg, daggerImg, fistImg, greatSwordImg, healthPotionImg,
-leatherArmorImg, longSwordImg, morningstarImg, plateMailArmorImg, scaleMailArmorImg, sharpSwordImg, studdedLeatherArmorImg, pathImg } from './images.js'
+leatherArmorImg, longSwordImg, morningstarImg, plateMailArmorImg, scaleMailArmorImg, sharpSwordImg, studdedLeatherArmorImg, pathImg, goblinImg, bigHeroImg, bugBearImg,
+skeletonImg, slimeImg, trollImg } from './images.js'
 class Character{
     #id;
     #state = {};
@@ -284,6 +285,7 @@ class Txt{
 }
 class CanvasRenderer {
     constructor() {
+        this.playerAlive = true
         this.mainMenuButtons = [new Button(500,250,'Play'), new Button(500,290,'Instructions',125), new Button(500,330,'Settings')]
         this.title = new Txt('Welcome to Dungeon Adventure!',500,0,'#000000',48)
         this.step1 = [new Txt("Before we begin let's create your character",500,0), new Txt('First we will assign each of your attributes by rolling 4 6-sided dice',500,60),
@@ -427,15 +429,31 @@ class CanvasRenderer {
         new Txt("Gold -- "+player.getState().gold,850,0).draw()
     }
     drawDungeon(){
-        drawRect('#000000',0,0,1000,600)
+        if (page != 'battle'){
+            drawRect('#000000',0,0,1000,600)
+        }
         rooms[room].draw()
-        const { x: x, y: y} = player.getState()
-        ctx.drawImage(heroImg(),x,y)
-        drawRect('#ffffff',5,5,150,20)
-        new Txt(player.getState().hp+"/"+player.getState().max_hp,185,2,'#ffffff',20).draw()
-        new Txt("Gold -- "+player.getState().gold,60,30,'#ffffff').draw()
-        drawRect('#ff0000',5,5,(player.getState().hp/player.getState().max_hp)*150,20)
-        for (let i=0; i<this.mainButtons.length; i++){this.mainButtons[i].draw()}
+        if (page != 'battle'){
+            const { x: x, y: y} = player.getState()
+            ctx.drawImage(heroImg(),x,y)
+            drawRect('#ffffff',5,5,150,20)
+            new Txt(player.getState().hp+"/"+player.getState().max_hp,185,2,'#ffffff',20).draw()
+            new Txt("Gold -- "+player.getState().gold,60,30,'#ffffff').draw()
+            drawRect('#ff0000',5,5,(player.getState().hp/player.getState().max_hp)*150,20)
+            for (let i=0; i<this.mainButtons.length; i++){this.mainButtons[i].draw()}
+        }
+    }
+    drawDefeatScreen(){
+        drawRect('#007d00',0,0,1000,600)
+        for (let i=0; i<mainText.length; i++){
+            mainText[i].draw()
+        }
+        this.nextButton.draw()
+    }
+    drawGameOver(){
+        drawRect('#007d00',0,0,1000,600)
+        new Txt('Game Over!',500,200,'#ff0000',48).draw()
+        new Txt('press r to restart',500,300).draw()
     }
 }
 class MainLoop {
@@ -492,7 +510,6 @@ class Item{
         this.move = false
         if (slot == undefined){
             const possibleSlots = [...Array(25).keys()].filter(i => player.getState().items.every(item => item.slot !== i))
-            console.log(possibleSlots)
             this.slot = Math.min(...possibleSlots)
         }
         else{
@@ -543,12 +560,15 @@ class Item{
             if (this.slot == 'weapon'){
                 if (x>=830 && x<=920 && y>=10 && y<=100){
                     player.getState().weapon = 'fists'
+                    player.getState().minDmg = 1
+                    player.getState().maxDmg = 3
                     return true
                 }
             }
             if (this.slot == 'armor'){
                 if (x>=550 && x<=640 && y>=10 && y<=100){
                     player.getState().armor = 'none'
+                    player.getState().armorClass = 8
                     return true
                 }
             }
@@ -564,16 +584,16 @@ class Item{
             if (slots.slotX == 'weapon' && this.type == 'Damage'){
                 this.slot = 'weapon'
                 this.move = false
-                setTimeout(() => {player.getState().weapon = this.name},0)
+                setTimeout(() => {player.getState().weapon = this.name; player.getState().minDmg = this.minDmg; player.getState().maxDmg = this.maxDmg},0)
             }
             if (slots.slotX == 'armor' && this.type == 'Armor Class'){
                 this.slot = 'armor'
                 this.move = false
-                setTimeout(() => {player.getState().armor = this.name},0)
+                setTimeout(() => {player.getState().armor = this.name; player.getState().armorClass = this.armorClass},0)
             }
             setTimeout(() => {renderer.drawInventory()},0)
         }
-        storage.savePlayer(player)
+        setTimeout(() => {storage.savePlayer(player)},0)
     }
 }
 class Room{
@@ -589,104 +609,261 @@ class Room{
         this.monster = monster
     }
     draw(){
-        drawRect('#7d7d7d',150,125,700,350)
-        var { x: x, y: y } = player.getState()
-        if (this.south == true){
-            console.log('yes')
-            drawRect('#7d7d7d',462.5,475,75,125)
-            if (y>400 && (x<=442.5 || x>=482.5)){
-                player.getState().y -= 10
-                y -= 10
-            }
-            if (y>400){
-                player.getState().x = 465
-            }
-            if (y>520){
-                console.log('yes')
-                if(this.southRoom == 'town'){
-                    page = 'town'
-                    data.setItem('page','town')
-                    player.getState().x = 837.5
-                    player.getState().y = 300
-                    renderer.drawTown({ x: 837.5, y: 300})
+        if (this.monster != undefined){
+            page = 'battle'
+            data.setItem('page','battle')
+            setTimeout(() => {this.monster.Draw()},0)
+        }
+        else{
+            drawRect('#7d7d7d',150,125,700,350)
+            var { x: x, y: y } = player.getState()
+            if (this.south == true){
+                drawRect('#7d7d7d',462.5,475,75,125)
+                if (y>400 && (x<=442.5 || x>=482.5)){
+                    player.getState().y -= 10
+                    y -= 10
                 }
-                else{
-                    room = this.southRoom
+                if (y>400){
+                    player.getState().x = 465
+                }
+                if (y>520){
+                    if(this.southRoom == 'town'){
+                        page = 'town'
+                        data.setItem('page','town')
+                        player.getState().x = 837.5
+                        player.getState().y = 300
+                        renderer.drawTown({ x: 837.5, y: 300})
+                    }
+                    else{
+                        room = this.southRoom
+                        data.setItem('room',room)
+                        player.getState().y = 125
+                        renderer.drawDungeon()
+                    }
+                }
+            }
+            else{
+                if (y>400){
+                    player.getState().y -= 10
+                }
+            }
+            if (this.north == true){
+                drawRect('#7d7d7d',462.5,0,75,125)
+                if (y<125 && (x<=442.5 || x>=482.5)){
+                    player.getState().y += 10
+                    y += 10
+                }
+                if (y<125){
+                    player.getState().x = 465
+                }
+                if (y<20){
+                    room = this.northRoom
                     data.setItem('room',room)
-                    player.getState().y = 125
+                    player.getState().y = 400
                     renderer.drawDungeon()
                 }
             }
-        }
-        else{
-            if (y>400){
-                player.getState().y -= 10
+            else{
+                if (y<125){
+                    player.getState().y += 10
+                }
             }
-        }
-        if (this.north == true){
-            drawRect('#7d7d7d',462.5,0,75,125)
-            if (y<125 && (x<=442.5 || x>=482.5)){
-                player.getState().y += 10
-                y += 10
+            if (this.west == true){
+                drawRect('#7d7d7d',0,262.5,150,75)
+                if (x<150 && (y<=242.5 || y>=282.5)){
+                    player.getState().x += 10
+                    x += 10
+                }
+                if (x<150){
+                    player.getState().y = 262.5
+                }
+                if (x<20){
+                    room = this.westRoom
+                    data.setItem('room',room)
+                    player.getState().x = 775
+                    renderer.drawDungeon()
+                }
             }
-            if (y<125){
-                player.getState().x = 465
+            else{
+                if (x<150){
+                    player.getState().x += 10
+                }
             }
-            if (y<20){
-                room = this.northRoom
-                data.setItem('room',room)
-                player.getState().y = 400
-                renderer.drawDungeon()
+            if (this.east == true){
+                drawRect('#7d7d7d',850,262.5,150,75)
+                if (x>775 && (y<=242.5 || y>=282.5)){
+                    player.getState().x -= 10
+                    x -= 10
+                }
+                if (x>775){
+                    player.getState().y = 262.5
+                }
+                if (x>920){
+                    room = this.eastRoom
+                    data.setItem('room',room)
+                    player.getState().x = 150
+                    renderer.drawDungeon()
+                }
             }
-        }
-        else{
-            if (y<125){
-                player.getState().y += 10
-            }
-        }
-        if (this.west == true){
-            drawRect('#7d7d7d',0,262.5,150,75)
-            if (x<150 && (y<=242.5 || y>=282.5)){
-                player.getState().x += 10
-                x += 10
-            }
-            if (x<150){
-                player.getState().y = 262.5
-            }
-            if (x<20){
-                room = this.westRoom
-                data.setItem('room',room)
-                player.getState().x = 775
-                renderer.drawDungeon()
-            }
-        }
-        else{
-            if (x<150){
-                player.getState().x += 10
-            }
-        }
-        if (this.east == true){
-            drawRect('#7d7d7d',850,262.5,150,75)
-            if (x>775 && (y<=242.5 || y>=282.5)){
-                player.getState().x -= 10
-                x -= 10
-            }
-            if (x>775){
-                player.getState().y = 262.5
-            }
-            if (x>920){
-                room = this.eastRoom
-                data.setItem('room',room)
-                player.getState().x = 150
-                renderer.drawDungeon()
-            }
-        }
-        else{
-            if (x>775){
-                player.getState().x -= 10
+            else{
+                if (x>775){
+                    player.getState().x -= 10
+                }
             }
         }
 
+    }
+}
+function generateMonsterChoice(){
+    const num = Math.round(Math.random()*2+1)
+    var choice = undefined
+    if (num == 1){
+        choice = 'up high'
+    }
+    if (num == 2){
+        choice = 'in the middle'
+    }
+    if (num == 3){
+        choice = 'down low'
+    }
+    return choice
+}
+class Monster{
+    constructor(name,dexterity,gold,xp,dice){
+        this.playerDmg = undefined
+        this.playerHit = undefined
+        this.playerChoice = undefined
+        this.monsterChoice = undefined
+        this.gold = gold
+        this.xp = xp
+        this.dice = dice
+        this.turn = undefined
+        this.step = 1
+        this.name = name
+        this.dexterity = dexterity
+        this.txt1 = new Txt("It's a "+name+"!",500,425,'#ff0000',20)
+        this.txt2 = new Txt("First we need to roll a 20-sided die to determine who goes first",500,450,'#ffffff',20)
+        this.txt3 = new Txt("You must roll the "+name+"'s dexterity of "+dexterity+" or higher to go first",500,475,'#ffffff',20)
+        this.nextButton = new Button(470,575,"Next",60,25,20)
+        this.txt4 = new Txt("It is your turn. What would you like to do?",500,425,'#ffffff',20)
+        this.buttons = [new Button(390,500,"Attack",100,25,20), new Button(510,500,"Drink Potion",100,25,18)]
+        this.HMLButtons = [new Button(330,525,"up high",100,25,20), new Button(440,525,'in the middle',120,25,20), new Button(570,525,'down low',100,25,20)]
+        this.txt5 = new Txt("How would you like to attack?",500,425,'#ffffff',20)
+    }
+    Draw(){
+        drawRect('#7d7d7d',0,0,1000,600)
+        drawRect('#363636',0,425,1000,175)
+        ctx.drawImage(this.img,437.5,50)
+        ctx.drawImage(bigHeroImg(),437.5,275)
+        new Txt(this.hp+"/"+this.max_hp,400,10).draw()
+        drawRect('#ffffff',437.5,15,150,20)
+        drawRect('#ff0000',437.5,15,(this.hp/this.max_hp)*150,20)
+        drawRect('#ffffff',437.5,245,150,20)
+        drawRect('#ff0000',437.5,245,(player.getState().hp/player.getState().max_hp)*150,20)
+        new Txt(player.getState().hp+"/"+player.getState().max_hp,400,240).draw()
+        if (this.step == 1){
+            this.txt1.draw()
+            this.txt2.draw()
+            this.txt3.draw()
+            this.nextButton.draw()
+        }
+        if (this.step == 2){
+            for (let i=0; i<mainText.length; i++){
+                mainText[i].draw()
+            }
+            this.nextButton.draw()
+        }
+        if (this.turn == 'player'){
+            if (this.step == 3){
+                this.txt4.draw()
+                for (let i=0; i<this.buttons.length; i++){
+                    this.buttons[i].draw()
+                }
+            }
+            if (this.step == 4){
+                this.txt5.draw()
+                for (let i=0; i<this.HMLButtons.length; i++){
+                    this.HMLButtons[i].draw()
+                }
+            }
+            if (this.step == 5){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+        }
+        if (this.turn == 'monster'){
+            if (this.step == 3){
+                new Txt('The '+this.name+' is attacking you '+this.monsterChoice,500,425,'#ffffff',20).draw()
+                new Txt('How will you attempt to defend?',500,450,'#ffffff',20).draw()
+                for (let i=0; i<this.HMLButtons.length; i++){
+                    this.HMLButtons[i].draw()
+                }
+            }
+            if (this.step == 4){
+                for (let i=0;i<mainText.length;i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+            if (this.step == 5){
+                for (let i=0;i<mainText.length;i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+        }
+    }
+}
+class Goblin extends Monster{
+    constructor(name='goblin', dexterity=10, gold=Math.round(Math.random()*15+5), xp=15, dice=2){
+        super(name,dexterity,gold,xp,dice)
+        this.img = goblinImg()
+        this.strength = 10
+        this.armor = 10
+        this.hp = Math.round(Math.random()*10+15)
+        this.max_hp = this.hp
+    }
+}
+class Troll extends Monster{
+    constructor(name='troll',dexterity=11,gold=Math.round(Math.random()*20+10), xp=25, dice=2){
+        super(name,dexterity,gold,xp,dice)
+        this.img = trollImg()
+        this.strength = 11
+        this.armor = 11
+        this.hp = Math.round(Math.random()*15+15)
+        this.max_hp = this.hp
+    }
+}
+class Slime extends Monster{
+    constructor(name='slime',dexterity=8,gold=Math.round(Math.random()*7+3),xp=15,dice=2){
+        super(name,dexterity,gold,xp,dice)
+        this.img = slimeImg()
+        this.strength = 10
+        this.armor = 8
+        this.hp = Math.round(Math.random()*5+10)
+        this.max_hp = this.hp
+    }
+}
+class BugBear extends Monster{
+    constructor(name='bug bear',dexterity=12,gold=Math.round(Math.random()*20+10),xp=30,dice=3){
+        super(name,dexterity,gold,xp,dice)
+        this.img = bugBearImg()
+        this.strength = 11
+        this.armor = 12
+        this.hp = Math.round(Math.random()*20+20)
+        this.max_hp = this.hp
+    }
+}
+class Skeleton extends Monster{
+    constructor(name='skeleton',dexterity=11,gold=Math.round(Math.random()*15+5),xp=10,dice=2){
+        super(name,dexterity,gold,xp,dice)
+        this.img = skeletonImg()
+        this.strength = 10
+        this.armor = 10
+        this.hp = Math.round(Math.random()*10+5)
+        this.max_hp = this.hp
     }
 }
 
@@ -757,6 +934,12 @@ try{
         if(info.name == 'Long Sword'){img = longSwordImg()}
         if(info.name == 'Battle Axe'){img = battleAxeImg()}
         if(info.name == 'Great Sword'){img = greatSwordImg()}
+        if(info.name == 'Cloth Armor'){img = clothArmorImg()}
+        if(info.name == 'Leather Armor'){img = leatherArmorImg()}
+        if(info.name == 'Studded Leather Armor'){img = studdedLeatherArmorImg()}
+        if(info.name == 'Scale Mail Armor'){img = scaleMailArmorImg()}
+        if(info.name == 'Chain Mail Armor'){img = chainMailArmorImg()}
+        if(info.name == 'Plate Mail Armor'){img = plateMailArmorImg()}
         const item = new Item(info.name,info.type,info.range,img,info.slot)
         array.push(item)
     
@@ -782,49 +965,71 @@ if (inInstructions == null){
     data.setItem('inInventory',false)
     data.setItem('room',0)
 }
-console.log(room)
-
-var rooms = storage.load(room)
+var rooms = storage.load('rooms')
 if (rooms == null){
-    rooms = [new Room(true,true,false,false,1,'town',undefined,undefined), new Room(true,true,true,false,2,0,3,undefined), new Room(true,true,true,true,12,1,7,8),
-    new Room(false,false,true,true,undefined,undefined,4,1), new Room(true,false,true,true,6,undefined,5,3), //4
-    new Room(false,false,false,true,undefined,undefined,undefined,4), new Room(true,true,false,true,20,4,undefined,7), //6
+    rooms = [new Room(true,true,false,false,1,'town',undefined,undefined), new Room(true,true,true,false,2,0,3,undefined,new Skeleton()), new Room(true,true,true,true,12,1,7,8,new Slime()),
+    new Room(false,false,true,true,undefined,undefined,4,1,new Goblin()), new Room(true,false,true,true,6,undefined,5,3,new Goblin()), //4
+    new Room(false,false,false,true,undefined,undefined,undefined,4,new Troll()), new Room(true,true,false,true,20,4,undefined,7,new Goblin()), //6
     new Room(false,false,true,true,undefined,undefined,6,2), new Room(false,false,true,true,undefined,undefined,2,9), //8
-    new Room(false,true,true,true,undefined,10,8,15), new Room(true,true,false,false,9,11), //10
-    new Room(true,false,false,false,10,undefined,undefined,undefined), new Room(true,true,false,true,37,2,undefined,13), //12
-    new Room(false,false,true,true,undefined,undefined,12,14), new Room(true,true,true,true,44,15,13,19), //14
-    new Room(true,true,true,true,14,16,9,18), new Room(true,false,false,true,15,undefined,undefined,17), //16
-    new Room(false,false,true,false,undefined,undefined,16,undefined), new Room(false,false,true,false,undefined,undefined,15), //18
-    new Room(true,false,true,false,45,undefined,14,undefined), new Room(true,true,false,false,21,6),  //20
-    new Room(true,true,true,false,23,20,22), new Room(false,false,false,true,undefined,undefined,undefined,21),  //22
-    new Room(true,true,false,false,24,21), new Room(true,true,false,true,25,23,undefined,35), //24
-    new Room(true,true,false,false,26,24), new Room(false,true,false,true,undefined,25,undefined,27),  //26
-    new Room(false,false,true,true,undefined,undefined,26,28), new Room(false,true,true,false,undefined,29,27,undefined),  //28
+    new Room(false,true,true,true,undefined,10,8,15), new Room(true,true,false,false,9,11,undefined,undefined,new Skeleton()), //10
+    new Room(true,false,false,false,10,undefined,undefined,undefined,new Troll()), new Room(true,true,false,true,37,2,undefined,13,new Troll()), //12
+    new Room(false,false,true,true,undefined,undefined,12,14), new Room(true,true,true,true,44,15,13,19,new Slime()), //14
+    new Room(true,true,true,true,14,16,9,18), new Room(true,false,false,true,15,undefined,undefined,17,new Troll()), //16
+    new Room(false,false,true,false,undefined,undefined,16,undefined,new Skeleton()), new Room(false,false,true,false,undefined,undefined,15,undefined,new BugBear()), //18
+    new Room(true,false,true,false,45,undefined,14,undefined,new Slime()), new Room(true,true,false,false,21,6),  //20
+    new Room(true,true,true,false,23,20,22), new Room(false,false,false,true,undefined,undefined,undefined,21,new BugBear()),  //22
+    new Room(true,true,false,false,24,21), new Room(true,true,false,true,25,23,undefined,35,new Troll()), //24
+    new Room(true,true,false,false,26,24), new Room(false,true,false,true,undefined,25,undefined,27,new Skeleton()),  //26
+    new Room(false,false,true,true,undefined,undefined,26,28), new Room(false,true,true,false,undefined,29,27,undefined,new Goblin()),  //28
     new Room(true,true,true,true,28,34,32,30), new Room(false,false,true,true,undefined,undefined,29,31),  //30
-    new Room(false,false,true,false,undefined,undefined,30), new Room(false,false,true,true,undefined,undefined,33,29), //32
-    new Room(false,false,false,true,undefined,undefined,undefined,32), new Room(true,true,true,true,29,37,35,38),  //34
-    new Room(false,true,true,true,undefined,36,24,34), new Room(true,false,false,false,35), //36
+    new Room(false,false,true,false,undefined,undefined,30,undefined,new BugBear()), new Room(false,false,true,true,undefined,undefined,33,29), //32
+    new Room(false,false,false,true,undefined,undefined,undefined,32,new BugBear()), new Room(true,true,true,true,29,37,35,38,new BugBear()),  //34
+    new Room(false,true,true,true,undefined,36,24,34), new Room(true,false,false,false,35,undefined,undefined,undefined,new Troll()), //36
     new Room(true,true,false,false,34,12), new Room(false,true,true,true,undefined,39,34,41),   //38
-    new Room(true,true,false,false,38,40), new Room(true,false,false,false,39,undefined,undefined,undefined),  //40
-    new Room(false,true,true,true,undefined,42,38,48), new Room(true,true,false,false,41,43),  //42
-    new Room(true,true,false,false,42,44), new Room(true,true,false,false,43,14,undefined,undefined),  //44
-    new Room(true,true,false,false,46,19), new Room(true,true,false,false,47,45),   //46
+    new Room(true,true,false,false,38,40), new Room(true,false,false,false,39,undefined,undefined,undefined,new Slime()),  //40
+    new Room(false,true,true,true,undefined,42,38,48,new Skeleton()), new Room(true,true,false,false,41,43),  //42
+    new Room(true,true,false,false,42,44), new Room(true,true,false,false,43,14,undefined,undefined,new Goblin()),  //44
+    new Room(true,true,false,false,46,19), new Room(true,true,false,false,47,45,undefined,undefined,new Goblin()),   //46
     new Room(true,true,true,false,49,46,48), new Room(false,false,true,true,undefined,undefined,41,47),   //48
-    new Room(true,true,false,false,50,47), new Room(false,true,true,true,undefined,49,52,51),  //50
-    new Room(false,false,true,false,undefined,undefined,50), new Room(true,false,false,true,53,undefined,undefined,50),   //52
-    new Room(true,true,true,true,57,52,58,54), new Room(true,false,true,true,56,undefined,53,55),   //54
-    new Room(false,false,true,false,undefined,undefined,54,undefined), new Room(false,true,false,false,undefined,54),   //56
-    new Room(false,true,false,false,undefined,53), new Room(true,false,true,true,59,undefined,60,53),    //58
-    new Room(false,true,false,false,undefined,58), new Room(true,false,false,true,61,undefined,undefined,58),   //60
-    new Room(false,true,false,false,undefined,60,undefined,undefined)]  //61
+    new Room(true,true,false,false,50,47,undefined,undefined,new Slime()), new Room(false,true,true,true,undefined,49,52,51,new BugBear()),  //50
+    new Room(false,false,true,false,undefined,undefined,50,undefined,new Troll()), new Room(true,false,false,true,53,undefined,undefined,50,new Skeleton()),   //52
+    new Room(true,true,true,true,57,52,58,54,new BugBear()), new Room(true,false,true,true,56,undefined,53,55),   //54
+    new Room(false,false,true,false,undefined,undefined,54,undefined,new Slime()), new Room(false,true,false,false,undefined,54,undefined,new Skeleton()),   //56
+    new Room(false,true,false,false,undefined,53,undefined,undefined,new Troll()), new Room(true,false,true,true,59,undefined,60,53),    //58
+    new Room(false,true,false,false,undefined,58,undefined,undefined,new Goblin()), new Room(true,false,false,true,61,undefined,undefined,58,new Skeleton()),   //60
+    new Room(false,true,false,false,undefined,60,undefined,undefined,new BugBear())]  //61
     storage.saveRooms(rooms)
 }
 else{
-
+    const array = []
+    for (let i=0; i<rooms.length; i++){
+        const monsterInfo = rooms[i].monster
+        var newMonster = undefined
+        if (monsterInfo != undefined){
+            newMonster = new Monster(monsterInfo.name,monsterInfo.dexterity,monsterInfo.gold,monsterInfo.xp,monsterInfo.dice)
+            newMonster.hp = monsterInfo.hp
+            newMonster.max_hp = monsterInfo.max_hp
+            newMonster.armor = monsterInfo.armor
+            newMonster.strength = monsterInfo.strength
+            newMonster.step = monsterInfo.step
+            newMonster.monsterChoice = monsterInfo.monsterChoice
+            newMonster.playerDmg = monsterInfo.playerDmg
+            newMonster.playerChoice = monsterInfo.playerChoice
+            newMonster.turn = monsterInfo.turn
+            newMonster.playerHit = monsterInfo.playerHit
+            if(monsterInfo.name == 'goblin'){
+                newMonster.img = goblinImg()
+            }
+        }
+        const newRoom = new Room(rooms[i].north,rooms[i].south,rooms[i].west,rooms[i].east,rooms[i].northRoom,rooms[i].southRoom,rooms[i].westRoom,rooms[i].eastRoom,newMonster)
+        array.push(newRoom)
+    }
+    rooms = array
+    storage.saveRooms(rooms)
 }
-
-if (!player.coords.x || !player.coords.y || !player.getState().items || !player.getState().weapon || !player.getState().armor) {
-    player.setState({ x: 550, y: 350, items:[], weapon:'fists', armor:'none' });
+console.log(rooms)
+if (!player.coords.x || !player.coords.y) {
+    player.setState({ x: 550, y: 350, items:[], weapon:'fists', armor:'none', armorClass:8, minDmg:1, maxDmg:3, xp:0 });
 }
 storage.savePlayer(player)
 
@@ -841,7 +1046,7 @@ player.on('state:change', (state) => {
     if (page == 'town'){
         renderer.drawTown({ x, y })
     }
-    else{
+    else if (page == 'dungeon'){
         renderer.drawDungeon()
     }
     storage.savePlayer(player)
@@ -849,9 +1054,10 @@ player.on('state:change', (state) => {
 
 window.addEventListener('keydown', (e) => {
     if (page == 'town' || page == 'dungeon'){controls.keyChange(e.key, true)}
+    if (e.key == 'r' && page == 'game over'){data.clear(); location.reload()}
 })
 window.addEventListener('keyup', (e) => {
-    if (page == 'town' || page == 'shop' || page == 'dungeon'){controls.keyChange(e.key, false)}
+    controls.keyChange(e.key, false)
 })
 var mouseX = 0
 var mouseY = 0
@@ -1069,6 +1275,217 @@ window.addEventListener('click',function(e){
             }
         }
     }
+    else if (page == 'battle'){
+        const battle = rooms[room].monster
+        if (battle.step == 1){
+            const clicked = battle.nextButton.wasClicked(e)
+            if (clicked == true){
+                battle.step = 2
+                roll = Roll(1,false,20)
+                const total = roll.total+player.getState().dexterityBonus
+                mainText = [new Txt('Rolling to go first you got a '+roll.total,500,425,'#ffffff',20),
+                new Txt("plus your dexterity bonus of "+player.getState().dexterityBonus+" gives you a total of "+total,500,450,'#ffffff',20)]
+                if (total>=battle.dexterity){
+                    mainText.push(new Txt('You rolled higher the '+battle.name+"'s dexterity of "+battle.dexterity,500,475,'#00ff00',20))
+                    mainText.push(new Txt('So you get to go first!',500,500,'#00ff00',20))
+                    battle.turn = 'player'
+                }
+                else{
+                    mainText.push(new Txt('You rolled lower than the '+battle.name+"'s dexterity of "+battle.dexterity,500,475,'#ff0000',20))
+                    mainText.push(new Txt('So the '+battle.name+" get's to go first",500,500,'#ff0000',20))
+                    battle.turn = 'monster'
+                }
+                storage.saveText(mainText)
+                storage.saveRooms(rooms)
+                renderer.drawDungeon()
+            }
+        }
+        else if (battle.step == 2){
+            const clicked = battle.nextButton.wasClicked(e)
+            if (clicked == true){
+                battle.step = 3
+                battle.monsterChoice = generateMonsterChoice()
+                storage.saveRooms(rooms)
+                renderer.drawDungeon()
+            }
+        }
+        else if (battle.turn == 'player'){
+            if (battle.step == 3){
+                const clicked = battle.buttons.find((b) => b.wasClicked(e))
+                if (clicked != undefined){
+                    if (clicked.text == 'Attack'){
+                        battle.step = 4
+                        storage.saveRooms(rooms)
+                        renderer.drawDungeon()
+                    }
+                }
+            }
+            else if (battle.step == 4){
+                const clicked = battle.HMLButtons.find((b) => b.wasClicked(e))
+                if (clicked != undefined){
+                    battle.playerChoice = clicked.text
+                    battle.monsterChoice = generateMonsterChoice()
+                    battle.step = 5
+                    roll = Roll(1,false,20)
+                    const total = roll.total+player.getState().strengthBonus
+                    mainText = [new Txt('You attack '+battle.playerChoice,500,425,'#ffffff',20),
+                    new Txt('The '+battle.name+' defends '+battle.monsterChoice,500,450,'#ffffff',20),
+                    new Txt('You must roll the '+battle.name+"'s armor class of "+battle.armor+" or higher on a 20-sided die to hit it",500,475,'#ffffff',20),
+                    new Txt('Rolling to hit the '+battle.name+' you roll a '+roll.total+' plus you strength bonus of '+player.getState().strengthBonus+' gets you a total of '+total,500,500,'#ffffff',20)]
+                    if (total>=battle.armor){
+                        mainText.push(new Txt('You rolled higher than the '+battle.name+"'s armor class of "+battle.armor+" and hit it!",500,525,'#00ff00',20))
+                        battle.playerHit = true
+                    }
+                    else{
+                        mainText.push(new Txt('You rolled less than the '+battle.name+"'s armor class of "+battle.armor+' and miss!',500,525,'#ff0000',20))
+                        battle.playerHit = false
+                    }
+                    storage.saveText(mainText)
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+            else if (battle.step == 5){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    if (battle.playerHit == true){
+                        battle.playerHit = false
+                        if (player.getState().weapon == 'fists' || player.getState().weapon == 'Sharp Sword'){
+                            roll = Roll(1,false,player.getState().maxDmg)
+                        }
+                        else{
+                            roll = Roll(Math.round(player.getState().maxDmg/6),false,6)
+                        }
+                        var dmg = roll.total
+                        mainText = [new Txt('Rolling for damage you get a '+roll.rolls+' for a total of '+dmg+' damage with your '+player.getState().weapon,500,425,'#ffffff',20)]
+                        if (battle.playerChoice == battle.monsterChoice){
+                            dmg = Math.ceil(dmg/2)
+                            mainText.push(new Txt('But since the '+battle.name+' successfully defended you only do half damage(rounded up) for a total of '+dmg+' damage',500,450,'#ff0000',20))
+                        }
+                        battle.hp -= dmg
+                        if (battle.hp<=0){
+                            battle.hp = 0
+                            mainText.push(new Txt('You have defeated the '+battle.name+'!',500,475,'#00ff00',20))
+                            mainText.push(new Txt('You search the '+battle.name+' and find '+battle.gold,500,500,'#ffffff',20))
+                            mainText.push(new Txt('You also gained '+battle.xp+' experience for defeating the '+battle.name,500,525,'#ffffff',20))
+                            player.getState().gold += battle.gold
+                            player.getState().xp += battle.xp
+                        }
+                        storage.saveText(mainText)
+                    }
+                    else{
+                        if (battle.hp == 0){
+                            rooms[room].monster = undefined
+                            page = 'dungeon'
+                            data.setItem('page','dungeon')
+                        }
+                        else{
+                            battle.turn = 'monster'
+                            battle.step = 3
+                        }
+                    }
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+        }
+        else if (battle.turn == 'monster'){
+            if (battle.step == 3){
+                const clicked = battle.HMLButtons.find((b) => b.wasClicked(e))
+                if (clicked != undefined){
+                    battle.playerChoice = clicked.text
+                    battle.step = 4
+                    mainText = [new Txt('You defend '+battle.playerChoice,500,425,'#ffffff',20),
+                    new Txt('The '+battle.name+' attacks '+battle.monsterChoice,500,450,'#ffffff',20),
+                    new Txt('The '+battle.name+" must roll to hit you on a 20-sided die",500,475,'#ffffff',20),
+                    new Txt('The '+battle.name+' needs to roll your armor class of '+player.getState().armorClass+' or higher to hit you',500,500,'#ffffff',20)]
+                    storage.saveRooms(rooms)
+                    storage.saveText(mainText)
+                    renderer.drawDungeon()
+                }
+            }
+            else if (battle.step == 4){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    battle.step = 5
+                    roll = Roll(1,false,20)
+                    mainText = [new Txt('Rolling to hit you the '+battle.name+' gets a '+roll.total,500,425,'#ffffff',20)]
+                    if (roll.total>=player.getState().armorClass){
+                        mainText.push(new Txt('The '+battle.name+' rolls higher than your armor class of '+player.getState().armorClass+' and hits you!',500,450,'#ff0000',20))
+                        roll = Roll(battle.dice,false,6)
+                        var dmg = roll.total
+                        mainText.push(new Txt('Rolling for damage the '+battle.name+' got a '+roll.rolls+" for a total of "+roll.total+" damage",500,475,'#ff0000',20))
+                        if (battle.playerChoice == battle.monsterChoice){
+                            dmg = Math.ceil(dmg/2)
+                            mainText.push(new Txt('But since you successfully defended the attack the damage is halved(rounded up) for a total of '+dmg+' damage',500,500,'#00ff00',20))
+                        }
+                        player.getState().hp -= dmg
+                        if (player.getState().hp<0){
+                            player.getState().hp = 0
+                        }
+                        storage.savePlayer(player)
+                    }
+                    else{
+                        mainText.push(new Txt('The '+battle.name+' rolled lower than your armor class of '+player.getState().armorClass+' and misses!',500,450,'#00ff00',20))
+                    }
+                    storage.saveText(mainText)
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+            else if(battle.step == 5){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    if (player.getState().hp == 0){
+                        page = 'defeat'
+                        data.setItem('page','defeat')
+                        roll = Roll(1,false,20)
+                        const total = roll.total+player.getState().wisdomBonus
+                        mainText = [new Txt("You are dead!",500,0,'#ff0000'), new Txt("But it's not over yet",500,30), new Txt("Let's see if the Gods will revive you",500,60), 
+                        new Txt('On order to be revived you need to roll an 8 or higher on a 20-sided die',500,120), 
+                        new Txt('Rolling the die you got a '+roll.total+' plus you wisdom bonus of '+player.getState().wisdomBonus+' gives you a total of '+total,500,180)]
+                        if (total>=8){
+                            mainText.push(new Txt('The Gods are pleased and revive you!',500,240,'#00ff00'))
+                        }
+                        else{
+                            mainText.push(new Txt('The Gods ignore your cries and leave you for the monsters of the dungeon to feed on!',500,240,'#ff0000'))
+                            renderer.playerAlive = false
+                        }
+                        storage.saveText(mainText)
+                        renderer.drawDefeatScreen()
+                    }
+                    else{
+                        battle.turn = 'player'
+                        battle.step = 3
+                        storage.saveRooms(rooms)
+                        renderer.drawDungeon()
+                    }
+                }
+            }
+        }
+    }
+    else if (page == 'defeat'){
+        const clicked = renderer.nextButton.wasClicked(e)
+        if (clicked == true){
+            if (renderer.playerAlive == true){
+                room = 0
+                player.getState().hp = Math.ceil(player.getState().max_hp/2)
+                player.getState().x = 462.5
+                player.getState().y = 400
+                storage.savePlayer(player)
+                storage.saveRooms(rooms)
+                data.setItem('room',0)
+                page = 'dungeon'
+                data.setItem('page','dungeon')
+                renderer.drawDungeon()
+            }
+            else{
+                page = 'game over'
+                data.setItem('page','game over')
+                renderer.drawGameOver()
+            }
+        }
+    }
 })
 if (inInstructions == true){
     renderer.drawInstructions()
@@ -1106,11 +1523,17 @@ else if (page == 'shop'){
         setTimeout(() => {renderer.drawShop()},i*10)
     }
 }
-else if (page == 'dungeon'){
+else if (page == 'dungeon' || page == 'battle'){
     renderer.drawDungeon()
     for (let i=0; i<100; i++){
         setTimeout(() => {renderer.drawDungeon()},i*10)
     }
+}
+else if (page == 'defeat'){
+    renderer.drawDefeatScreen()
+}
+else if (page == 'game over'){
+    renderer.drawGameOver()
 }
 const mainLoop = new MainLoop({ controls })
 function Run(){
@@ -1118,3 +1541,4 @@ function Run(){
     requestAnimationFrame(Run)
 }
 Run()
+data.clear()
