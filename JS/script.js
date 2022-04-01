@@ -883,7 +883,6 @@ function Roll(dice,min=false,sides=6){
 }
 
 const storage = new Storage()
-data.clear()
 const playerData = storage.loadPlayer()
   
 const player = playerData 
@@ -1366,7 +1365,7 @@ window.addEventListener('click',function(e){
                         if (battle.hp<=0){
                             battle.hp = 0
                             mainText.push(new Txt('You have defeated the '+battle.name+'!',500,475,'#00ff00',20))
-                            mainText.push(new Txt('You search the '+battle.name+' and find '+battle.gold,500,500,'#ffffff',20))
+                            mainText.push(new Txt('You search the '+battle.name+' and find '+battle.gold+' gold',500,500,'#ffffff',20))
                             mainText.push(new Txt('You also gained '+battle.xp+' experience for defeating the '+battle.name,500,525,'#ffffff',20))
                             player.getState().gold += battle.gold
                             player.getState().xp += battle.xp
