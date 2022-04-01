@@ -792,6 +792,12 @@ class Monster{
                 }
                 this.nextButton.draw()
             }
+            if (this.step == 6){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
         }
         if (this.turn == 'monster'){
             if (this.step == 3){
@@ -883,6 +889,7 @@ function Roll(dice,min=false,sides=6){
 }
 
 const storage = new Storage()
+
 const playerData = storage.loadPlayer()
   
 const player = playerData 
@@ -1016,9 +1023,11 @@ else{
             newMonster.playerChoice = monsterInfo.playerChoice
             newMonster.turn = monsterInfo.turn
             newMonster.playerHit = monsterInfo.playerHit
-            if(monsterInfo.name == 'goblin'){
-                newMonster.img = goblinImg()
-            }
+            if(monsterInfo.name == 'goblin'){newMonster.img = goblinImg()}
+            if(monsterInfo.name == 'skeleton'){newMonster.img = skeletonImg()}
+            if(monsterInfo.name == 'bug bear'){newMonster.img = bugBearImg()}
+            if(monsterInfo.name == 'slime'){newMonster.img = slimeImg()}
+            if(monsterInfo.name == 'troll'){newMonster.img = trollImg()}
         }
         const newRoom = new Room(rooms[i].north,rooms[i].south,rooms[i].west,rooms[i].east,rooms[i].northRoom,rooms[i].southRoom,rooms[i].westRoom,rooms[i].eastRoom,newMonster)
         array.push(newRoom)
@@ -1240,6 +1249,10 @@ window.addEventListener('click',function(e){
                 player.getState().gold -= click.cost
                 renderer.drawShop()
                 player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                if (click.name == 'Healing Potion(3)'){
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                }
                 storage.savePlayer(player)
             }
         }
@@ -1314,9 +1327,26 @@ window.addEventListener('click',function(e){
                 if (clicked != undefined){
                     if (clicked.text == 'Attack'){
                         battle.step = 4
-                        storage.saveRooms(rooms)
-                        renderer.drawDungeon()
                     }
+                    if (clicked.text == 'Drink Potion' && player.getState().hp<player.getState().max_hp){
+                        const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
+                        player.getState().items.splice(player.getState().items.indexOf(potion),1)
+                        if (potion != undefined){
+                            roll = Roll(5,false,6)
+                            const total = player.getState().constitutionBonus+roll.total
+                            player.getState().hp += total
+                            if (player.getState().hp>player.getState().max_hp){
+                                player.getState().hp = player.getState().max_hp
+                            }
+                            mainText = [new Txt('Rolling the dice you get '+roll.rolls+' for a total of '+roll.total,500,425,'#ffffff',20),
+                            new Txt('plus your constitution bonus of '+player.getState().constitutionBonus+' gives you a total of '+total,500,450,'#ffffff',20),
+                            new Txt('So you heal for '+total+' hitpoints',500,475,'#ffffff',20)]
+                            battle.step = 6
+                            storage.saveText(mainText)
+                        }
+                    }
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
                 }
             }
             else if (battle.step == 4){
@@ -1383,6 +1413,15 @@ window.addEventListener('click',function(e){
                             battle.step = 3
                         }
                     }
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+            else if (battle.step == 6){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    battle.turn = 'monster'
+                    battle.step = 3
                     storage.saveRooms(rooms)
                     renderer.drawDungeon()
                 }
@@ -1527,6 +1566,7 @@ else if (page == 'dungeon' || page == 'battle'){
     for (let i=0; i<100; i++){
         setTimeout(() => {renderer.drawDungeon()},i*10)
     }
+    console.log(rooms[room].monster)
 }
 else if (page == 'defeat'){
     renderer.drawDefeatScreen()
