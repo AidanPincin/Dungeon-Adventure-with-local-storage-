@@ -637,6 +637,7 @@ class Room{
                     else{
                         room = this.southRoom
                         data.setItem('room',room)
+                        if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
                         player.getState().y = 125
                         renderer.drawDungeon()
                     }
@@ -658,6 +659,7 @@ class Room{
                 }
                 if (y<20){
                     room = this.northRoom
+                    if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
                     data.setItem('room',room)
                     player.getState().y = 400
                     renderer.drawDungeon()
@@ -680,6 +682,7 @@ class Room{
                 if (x<20){
                     room = this.westRoom
                     data.setItem('room',room)
+                    if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
                     player.getState().x = 775
                     renderer.drawDungeon()
                 }
@@ -701,6 +704,7 @@ class Room{
                 if (x>920){
                     room = this.eastRoom
                     data.setItem('room',room)
+                    if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
                     player.getState().x = 150
                     renderer.drawDungeon()
                 }
@@ -886,6 +890,19 @@ function Roll(dice,min=false,sides=6){
         total -= min
     }
     return {'rolls':rolls, 'total':total}
+}
+
+function monsterGenerator(){
+    const chance = Math.random()
+    if (chance > 0.79){
+        const type = Roll(1,false,5)
+        if(type == 1){return new Skeleton()}
+        if(type == 2){return new Slime()}
+        if(type == 3){return new Goblin()}
+        if(type == 4){return new Troll()}
+        if(type == 5){return new BugBear()}
+    }
+    else{return undefined}
 }
 
 const storage = new Storage()
