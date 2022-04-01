@@ -1541,4 +1541,3 @@ function Run(){
     requestAnimationFrame(Run)
 }
 Run()
-data.clear()
