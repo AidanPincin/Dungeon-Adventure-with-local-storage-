@@ -883,7 +883,7 @@ function Roll(dice,min=false,sides=6){
 }
 
 const storage = new Storage()
-
+data.clear()
 const playerData = storage.loadPlayer()
   
 const player = playerData 
