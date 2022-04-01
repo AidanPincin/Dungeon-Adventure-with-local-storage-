@@ -1492,6 +1492,8 @@ window.addEventListener('click',function(e){
                 const clicked = battle.nextButton.wasClicked(e)
                 if (clicked == true){
                     if (player.getState().hp == 0){
+                        battle.step = 1
+                        storage.saveRooms(rooms)
                         page = 'defeat'
                         data.setItem('page','defeat')
                         roll = Roll(1,false,20)
