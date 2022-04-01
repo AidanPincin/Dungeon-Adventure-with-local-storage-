@@ -24,6 +24,12 @@ const ScaleMailArmorImg = image('Images/scale-mail-armor.png')
 const SharpSwordImg = image('Images/sharpsword.png')
 const StuddedLeatherArmorImg = image('Images/studded-leather-armor.png')
 const PathImg = image('Images/path.png')
+const GoblinImg = image('Images/goblin.png')
+const BigHeroImg = image('Images/bigger_hero.png')
+const SlimeImg = image('Images/green-slime.png')
+const BugBearImg = image('Images/bear.png')
+const SkeletonImg = image('Images/skeleton.png')
+const TrollImg = image('Images/troll.png')
 export function heroImg(){return HeroImg}
 export function chatImg(){return ChatImg}
 export function shopImg(){return ShopImg}
@@ -45,3 +51,9 @@ export function sharpSwordImg(){return SharpSwordImg}
 export function studdedLeatherArmorImg(){return StuddedLeatherArmorImg}
 export function armorImg(){return ArmorImg}
 export function pathImg(){return PathImg}
+export function goblinImg(){return GoblinImg}
+export function bigHeroImg(){return BigHeroImg}
+export function slimeImg(){return SlimeImg}
+export function bugBearImg(){return BugBearImg}
+export function skeletonImg(){return SkeletonImg}
+export function trollImg(){return TrollImg}
