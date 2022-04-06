@@ -1,6 +1,6 @@
 import { heroImg, moneyBagImg, manImg, shopImg, chatImg, armorImg, battleAxeImg, chainMailArmorImg, clothArmorImg, daggerImg, fistImg, greatSwordImg, healthPotionImg,
 leatherArmorImg, longSwordImg, morningstarImg, plateMailArmorImg, scaleMailArmorImg, sharpSwordImg, studdedLeatherArmorImg, pathImg, goblinImg, bigHeroImg, bugBearImg,
-skeletonImg, slimeImg, trollImg } from './images.js'
+skeletonImg, slimeImg, trollImg, magicMissleImg } from './images.js'
 class Character{
     #id;
     #state = {};
@@ -301,17 +301,18 @@ class CanvasRenderer {
             this.displayedShopItems = 'weapons'
             data.setItem('displayedShopItems','weapons')
         }
+        this.spellInfo = [new ShopItemInfo(145,75,'Magic Missle(5)','Damage','3-18',12,magicMissleImg())]
         this.weaponInfo = [new ShopItemInfo(145,75,'Dagger','Damage','1-6',5,daggerImg()), new ShopItemInfo(445,75,"Sharp Sword",'Damage','1-10',10,sharpSwordImg()),
-        new ShopItemInfo(745,75,"Morningstar",'Damage','2-12',20,morningstarImg()), new ShopItemInfo(145,350,"Long Sword","Damage","3-18",50,longSwordImg()),
-        new ShopItemInfo(445,350,"Battle Axe",'Damage','4-24',125,battleAxeImg()), new ShopItemInfo(745,350,'Great Sword','Damage','5-30',250,greatSwordImg())]
-        this.potionInfo = [new ShopItemInfo(145,75,"Healing Potion(3)","Heals","5-30HP",15,healthPotionImg())]
-        this.armorInfo = [new ShopItemInfo(145,75,'Cloth Armor','Armor Class',10,30,clothArmorImg()), new ShopItemInfo(445,75,'Leather Armor','Armor Class',11,60,leatherArmorImg()),
+        new ShopItemInfo(745,75,"Morningstar",'Damage','2-12',25,morningstarImg()), new ShopItemInfo(145,350,"Long Sword","Damage","3-18",60,longSwordImg()),
+        new ShopItemInfo(445,350,"Battle Axe",'Damage','4-24',125,battleAxeImg()), new ShopItemInfo(745,350,'Great Sword','Damage','5-30',300,greatSwordImg())]
+        this.potionInfo = [new ShopItemInfo(145,75,"Healing Potion(3)","Heals","4-24HP",15,healthPotionImg())]
+        this.armorInfo = [new ShopItemInfo(145,75,'Padded Armor','Armor Class',10,30,clothArmorImg()), new ShopItemInfo(445,75,'Leather Armor','Armor Class',11,45,leatherArmorImg()),
         new ShopItemInfo(745,75,'Studded Leather Armor','Armor Class',12,90,studdedLeatherArmorImg()), new ShopItemInfo(145,350,"Scale Mail Armor","Armor Class",13,200,scaleMailArmorImg()),
         new ShopItemInfo(445,350,"Chain Mail Armor","Armor Class",14,400,chainMailArmorImg()), new ShopItemInfo(745,350,'Plate Mail Armor','Armor Class',15,800,plateMailArmorImg())]
         this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110), new Button(450,5,'Stats',70), new Button(530,5,'Drink Healing Potion',170,30,18)]
         this.backButton = new Button(470,500,'Back',60)
         this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125)]
-        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armors"), new Button(890,400,"Back"), new Button(890,200,'Bargain'), new Button(890,360,'Spells'), new Button(890,160,'Sell Item')]
+        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armors"), new Button(890,400,"Back"), new Button(890,200,'Haggle'), new Button(890,360,'Spells'), new Button(890,160,'Sell Item')]
         if (this.statButtons == null){
             this.statButtons = [new Button(180,300,'Strength',150),new Button(340,300,'Intelligence',150),new Button(500,300,'Dexterity',150),
             new Button(660,300,'Constitution',150),new Button(255,340,'Wisdom',150),new Button(415,340,'Perception',150),new Button(575,340,'Charisma',150)]
@@ -542,8 +543,13 @@ class Item{
         this.img = img
         this.move = false
         if (slot == undefined){
-            const possibleSlots = [...Array(25).keys()].filter(i => player.getState().items.every(item => item.slot !== i))
-            this.slot = Math.min(...possibleSlots)
+            if (player.getState().items.filter(item => item.name === name).length>0){
+                this.slot = player.getState().items.find(item => item.name === name).slot
+            }
+            else{
+                const possibleSlots = [...Array(25).keys()].filter(i => player.getState().items.every(item => item.slot !== i))
+                this.slot = Math.min(...possibleSlots)
+            }
         }
         else{
             this.slot = slot
@@ -567,12 +573,15 @@ class Item{
         }
     }
     draw(){
+        const amount = player.getState().items.filter(item => item.name === this.name && item.slot === this.slot).length
         if (this.move == true){
             ctx.drawImage(this.img,mouseX-45,mouseY-45)
+            if (amount>1){new Txt(amount,mouseX+25,mouseY+10,'#000000',36).draw()}
         }
         else{
             if (this.slot != 'weapon' && this.slot != 'armor'){
                 ctx.drawImage(this.img,90+this.slotX*90,this.slotY*90)
+                if (amount>1){new Txt(amount,this.slotX*90+160,this.slotY*90+50,'#000000',36).draw()}
             }
             if (this.slot == 'weapon'){
                 ctx.drawImage(this.img,820,0)
@@ -787,7 +796,7 @@ class Monster{
         this.txt3 = new Txt("You must roll the "+name+"'s dexterity of "+dexterity+" or higher to go first",500,475,'#ffffff',20)
         this.nextButton = new Button(470,575,"Next",60,25,20)
         this.txt4 = new Txt("It is your turn. What would you like to do?",500,425,'#ffffff',20)
-        this.buttons = [new Button(390,500,"Attack",100,25,20), new Button(510,500,"Drink Potion",100,25,18)]
+        this.buttons = [new Button(450,500,"Attack",100,25,20), new Button(560,500,"Drink Potion",100,25,18), new Button(340,500,'Cast Spell',100,25,20)]
         this.HMLButtons = [new Button(330,525,"up high",100,25,20), new Button(440,525,'in the middle',120,25,20), new Button(570,525,'down low',100,25,20)]
         this.txt5 = new Txt("How would you like to attack?",500,425,'#ffffff',20)
     }
@@ -817,9 +826,9 @@ class Monster{
         if (this.turn == 'player'){
             if (this.step == 3){
                 this.txt4.draw()
-                for (let i=0; i<this.buttons.length; i++){
-                    this.buttons[i].draw()
-                }
+                this.buttons[0].draw()
+                if (player.getState().items.find(item => item.name === 'Healing Potion(3)')){this.buttons[1].draw()}
+                if (player.getState().items.find(item => item.name === 'Magic Missle(5)')){this.buttons[2].draw()}
             }
             if (this.step == 4){
                 this.txt5.draw()
@@ -834,6 +843,30 @@ class Monster{
                 this.nextButton.draw()
             }
             if (this.step == 6){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+            if (this.step == 7){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+            if (this.step == 8){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+            if (this.step == 9){
+                for (let i=0; i<mainText.length; i++){
+                    mainText[i].draw()
+                }
+                this.nextButton.draw()
+            }
+            if (this.step == 10){
                 for (let i=0; i<mainText.length; i++){
                     mainText[i].draw()
                 }
@@ -932,7 +965,6 @@ function Roll(dice,min=false,sides=6){
 function monsterGenerator(){
     const chance = Math.random()
     if (chance > 0.79){
-        console.log('generating...')
         const type = Roll(1,false,5).total
         if(type == 1){return new Skeleton()}
         if(type == 2){return new Slime()}
@@ -995,12 +1027,13 @@ try{
         if(info.name == 'Long Sword'){img = longSwordImg()}
         if(info.name == 'Battle Axe'){img = battleAxeImg()}
         if(info.name == 'Great Sword'){img = greatSwordImg()}
-        if(info.name == 'Cloth Armor'){img = clothArmorImg()}
+        if(info.name == 'Padded Armor'){img = clothArmorImg()}
         if(info.name == 'Leather Armor'){img = leatherArmorImg()}
         if(info.name == 'Studded Leather Armor'){img = studdedLeatherArmorImg()}
         if(info.name == 'Scale Mail Armor'){img = scaleMailArmorImg()}
         if(info.name == 'Chain Mail Armor'){img = chainMailArmorImg()}
         if(info.name == 'Plate Mail Armor'){img = plateMailArmorImg()}
+        if(info.name == 'Magic Missle(5)'){img = magicMissleImg()}
         const item = new Item(info.name,info.type,info.range,img,info.slot)
         array.push(item)
     
@@ -1172,9 +1205,11 @@ window.addEventListener('click',function(e){
             if (page == 'town'){renderer.drawTown({x: player.getState().x, y: player.getState().y})}
             else{renderer.drawDungeon()}
         }
-        const click = player.getState().items.find((i) => i.wasClicked(e))
-        if (click != undefined){
-            click.move = true
+        const click = player.getState().items.filter((i) => i.wasClicked(e))
+        if (click.length != 0){
+            for (let i=0; i<click.length; i++){
+                click[i].move = true
+            }
             renderer.drawInventory()
         }
     }
@@ -1280,7 +1315,7 @@ window.addEventListener('click',function(e){
                 data.setItem('page','town')
                 renderer.drawTown({x: player.getState().x, y: player.getState().y })
             }
-            else if (clicked.text == 'Bargain' || clicked.text == 'Spells' || clicked.text == 'Sell Item'){
+            else if (clicked.text == 'Bargain' || clicked.text == 'Sell Item'){
                 this.alert('Coming Soon!')
             }
             else{
@@ -1299,12 +1334,21 @@ window.addEventListener('click',function(e){
         if (renderer.displayedShopItems == 'armors'){
             click = renderer.armorInfo.find((b) => b.buyButton.wasClicked(e))
         }
+        if (renderer.displayedShopItems == 'spells'){
+            click = renderer.spellInfo.find((b) => b.buyButton.wasClicked(e))
+        }
         if (click != undefined){
             if (player.getState().gold>=click.cost){
                 player.getState().gold -= click.cost
                 renderer.drawShop()
                 player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
                 if (click.name == 'Healing Potion(3)'){
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                }
+                if (click.name == 'Magic Missle(5)'){
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
+                    player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
                     player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
                     player.getState().items.push(new Item(click.name,click.type,click.range,click.img))
                 }
@@ -1333,7 +1377,7 @@ window.addEventListener('click',function(e){
             if (clicked.text == 'Drink Healing Potion' && player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
                 const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
                 player.getState().items.splice(player.getState().items.indexOf(potion),1)
-                roll = Roll(5,false,6)
+                roll = Roll(4,false,6)
                 const total = roll.total+player.getState().constitutionBonus
                 player.getState().hp += total
                 if (player.getState().hp>player.getState().max_hp){
@@ -1365,7 +1409,7 @@ window.addEventListener('click',function(e){
             if (clicked.text == 'Drink Healing Potion' && player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
                 const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
                 player.getState().items.splice(player.getState().items.indexOf(potion),1)
-                roll = Roll(5,false,6)
+                roll = Roll(4,false,6)
                 const total = roll.total+player.getState().constitutionBonus
                 player.getState().hp += total
                 if (player.getState().hp>player.getState().max_hp){
@@ -1417,24 +1461,39 @@ window.addEventListener('click',function(e){
                     if (clicked.text == 'Attack'){
                         battle.step = 4
                     }
-                    if (clicked.text == 'Drink Potion' && player.getState().hp<player.getState().max_hp){
+                    if (clicked.text == 'Drink Potion' && player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
                         const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
                         player.getState().items.splice(player.getState().items.indexOf(potion),1)
-                        if (potion != undefined){
-                            roll = Roll(5,false,6)
-                            const total = player.getState().constitutionBonus+roll.total
-                            player.getState().hp += total
-                            if (player.getState().hp>player.getState().max_hp){
-                                player.getState().hp = player.getState().max_hp
-                            }
-                            mainText = [new Txt('Rolling the dice you get '+roll.rolls+' for a total of '+roll.total,500,425,'#ffffff',20),
-                            new Txt('plus your constitution bonus of '+player.getState().constitutionBonus+' gives you a total of '+total,500,450,'#ffffff',20),
-                            new Txt('So you heal for '+total+' hitpoints',500,475,'#ffffff',20)]
-                            battle.step = 6
-                            storage.saveText(mainText)
+                        roll = Roll(4,false,6)
+                        const total = player.getState().constitutionBonus+roll.total
+                        player.getState().hp += total
+                        if (player.getState().hp>player.getState().max_hp){
+                            player.getState().hp = player.getState().max_hp
                         }
+                        mainText = [new Txt('Rolling the dice you get '+roll.rolls+' for a total of '+roll.total,500,425,'#ffffff',20),
+                        new Txt('plus your constitution bonus of '+player.getState().constitutionBonus+' gives you a total of '+total,500,450,'#ffffff',20),
+                        new Txt('So you heal for '+total+' hitpoints',500,475,'#ffffff',20)]
+                        battle.step = 6
+                        storage.saveText(mainText)
+                    }
+                    if (clicked.text == 'Cast Spell' && player.getState().items.find(item => item.name === 'Magic Missle(5)')){
+                        const spell = player.getState().items.find(item => item.name === 'Magic Missle(5)')
+                        player.getState().items.splice(player.getState().items.indexOf(spell),1)
+                        roll = Roll(1,false,20)
+                        mainText = [new Txt('You decide to cast your magic missle spell',500,425,'#ffffff',20), new Txt('The '+battle.name+' must roll your dexterity of '+player.getState().dexterity+' or higher on a 20-sided die to dodge the attack',500,450,'#ffffff',20),
+                        new Txt('Rolling the die the '+battle.name+' got a '+roll.total,500,475,'#ffffff',20)]
+                        if (roll.total>=player.getState().dexterity){
+                            mainText.push(new Txt('The '+battle.name+' rolled higher than your dexterity of '+player.getState().dexterity+' and dodges the attack!',500,500,'#ff0000',20))
+                            battle.step = 10
+                        }
+                        else{
+                            mainText.push(new Txt('The '+battle.name+' rolled lower than your dexterity of '+player.getState().dexterity+' and you hit it!',500,500,'#00ff00',20))
+                            battle.step = 7
+                        }
+                        storage.saveText(mainText)
                     }
                     storage.saveRooms(rooms)
+                    storage.savePlayer(player)
                     renderer.drawDungeon()
                 }
             }
@@ -1514,6 +1573,71 @@ window.addEventListener('click',function(e){
                     storage.saveRooms(rooms)
                     renderer.drawDungeon()
                 }
+            }
+            else if (battle.step == 7){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    battle.step = 8
+                    roll = Roll(1,false,20)
+                    const total = roll.total+player.getState().intelligenceBonus
+                    mainText = [new Txt('Now you must roll a 10 or higher on a 20-sided die on order to cast the spell at full power',500,425,'#ffffff',20),
+                    new Txt('Rollling the die you got a '+roll.total+' plus you intelligence bonus of '+player.getState().intelligenceBonus+' gets you a total of '+total,500,450,'#ffffff',20)]
+                    if (total>=10){
+                        mainText.push(new Txt('You rolled higher than a 10 so you cast the spell at full power!',500,475,'#00ff00',20))
+                        roll = Roll(3,false,6)
+                        battle.hp -= roll.total
+                    }
+                    else{
+                        mainText.push(new Txt('You rolled lower than 10 so you cast the spell at half power!',500,475,'#ff0000',20))
+                        roll = Roll(3,false,3)
+                        battle.hp -= roll.total
+                    }
+                    if (battle.hp<0){
+                        battle.hp = 0
+                    }
+                    mainText.push(new Txt('Rolling for damage you got '+roll.rolls+' for a total of '+roll.total+' so you do '+roll.total+' damage to the '+battle.name,500,500,'#ffffff',20))
+                    storage.saveText(mainText)
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+            else if (battle.step == 8){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    if (battle.hp == 0){
+                        battle.step = 9
+                        mainText = [new Txt('You have defeated the '+battle.name+'!',500,425,'#00ff00',20), new Txt('You search the '+battle.name+' and find '+battle.gold+' gold',500,450,'#ffffff',20),
+                        new Txt('You also gained '+battle.xp+' experience for defeating the '+battle.name,500,475,'#ffffff',20)]
+                        player.getState().gold += battle.gold
+                        player.getState().xp += battle.xp
+                    }
+                    else{
+                        battle.turn = 'monster'
+                        battle.step = 3
+                    }
+                }
+                storage.saveText(mainText)
+                storage.saveRooms(rooms)
+                renderer.drawDungeon()
+            }
+            else if (battle.step == 9){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    rooms[room].monster = undefined
+                    page = 'dungeon'
+                    data.setItem('page','dungeon')
+                    storage.saveRooms(rooms)
+                    renderer.drawDungeon()
+                }
+            }
+            else if (battle.step == 10){
+                const clicked = battle.nextButton.wasClicked(e)
+                if (clicked == true){
+                    battle.turn = 'monster'
+                    battle.step = 3
+                }
+                storage.saveRooms(rooms)
+                renderer.drawDungeon()
             }
         }
         else if (battle.turn == 'monster'){
