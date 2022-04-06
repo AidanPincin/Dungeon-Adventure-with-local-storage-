@@ -30,6 +30,7 @@ const SlimeImg = image('Images/green-slime.png')
 const BugBearImg = image('Images/bear.png')
 const SkeletonImg = image('Images/skeleton.png')
 const TrollImg = image('Images/troll.png')
+const MagicMissleImg = image('Images/missle-spell.png')
 export function heroImg(){return HeroImg}
 export function chatImg(){return ChatImg}
 export function shopImg(){return ShopImg}
@@ -57,3 +58,4 @@ export function slimeImg(){return SlimeImg}
 export function bugBearImg(){return BugBearImg}
 export function skeletonImg(){return SkeletonImg}
 export function trollImg(){return TrollImg}
+export function magicMissleImg(){return MagicMissleImg}
