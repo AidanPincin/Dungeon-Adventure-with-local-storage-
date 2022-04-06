@@ -6,53 +6,53 @@ class Character{
     #state = {};
     #eventHandlers = [];
     #defaultMoveN = 10;
-   
+    
     constructor(id){
-      this.#id = id ? id : crypto.randomUUID()
+        this.#id = id ? id : crypto.randomUUID()
     }
-  
+    
     get id() {
-      return this.#id;
+        return this.#id;
     }
-  
+    
     get coords() {
-      const { x, y } = this.getState()
-      return { x, y }
+        const { x, y } = this.getState()
+        return { x, y }
     }
-  
+    
     setState(state){
-      this.#state = Object.assign(this.#state, state)
-      this.emit('state:change', this.getState())
+        this.#state = Object.assign(this.#state, state)
+        this.emit('state:change', this.getState())
     }
-  
+    
     getState() {
-      return this.#state
+        return this.#state
     }
-  
+    
     on(event, fn) {
-      this.#eventHandlers.push({ event, fn })
+        this.#eventHandlers.push({ event, fn })
     }
-  
+    
     emit(event, data) {
-      this.#eventHandlers
+        this.#eventHandlers
         .filter(handler => handler.event === event)
         .forEach(handler => handler.fn(data))
     }
-  
+    
     toJSON() {
-      return {
+        return {
         id: this.#id,
         state: this.getState(),
-      }
+        }
     }
-  
+    
     static fromJSON(data) {
-      const d = typeof data === 'string' 
+        const d = typeof data === 'string' 
         ? JSON.parse(data) 
         : data;
-      const c = new Character(d.id);
-      c.setState(d.state);
-      return c;
+        const c = new Character(d.id);
+        c.setState(d.state);
+        return c;
     }
 
     moveUp(n = this.#defaultMoveN) {
@@ -286,7 +286,7 @@ class Txt{
 class CanvasRenderer {
     constructor() {
         this.playerAlive = true
-        this.mainMenuButtons = [new Button(500,250,'Play'), new Button(500,290,'Instructions',125), new Button(500,330,'Settings')]
+        this.mainMenuButtons = [new Button(500,250,'Play'), new Button(500,290,'Instructions',125)]
         this.title = new Txt('Welcome to Dungeon Adventure!',500,0,'#000000',48)
         this.step1 = [new Txt("Before we begin let's create your character",500,0), new Txt('First we will assign each of your attributes by rolling 4 6-sided dice',500,60),
         new Txt('and adding the 3 highest rolls together',500,90),
@@ -308,10 +308,10 @@ class CanvasRenderer {
         this.armorInfo = [new ShopItemInfo(145,75,'Cloth Armor','Armor Class',10,30,clothArmorImg()), new ShopItemInfo(445,75,'Leather Armor','Armor Class',11,60,leatherArmorImg()),
         new ShopItemInfo(745,75,'Studded Leather Armor','Armor Class',12,90,studdedLeatherArmorImg()), new ShopItemInfo(145,350,"Scale Mail Armor","Armor Class",13,200,scaleMailArmorImg()),
         new ShopItemInfo(445,350,"Chain Mail Armor","Armor Class",14,400,chainMailArmorImg()), new ShopItemInfo(745,350,'Plate Mail Armor','Armor Class',15,800,plateMailArmorImg())]
-        this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110)]
+        this.mainButtons = [new Button(250,5,"Menu",70,30), new Button(330,5,"Inventory",110), new Button(450,5,'Stats',70), new Button(530,5,'Drink Healing Potion',170,30,18)]
         this.backButton = new Button(470,500,'Back',60)
-        this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125), new Button(450,290,"Settings")]
-        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armors"), new Button(890,360,"Back")]
+        this.menuButtons = [new Button(450,210,"Resume"), new Button(437.5,250,"Instructions",125)]
+        this.shopButtons = [new Button(890,240,"Weapons"), new Button(890,280,"Potions"), new Button(890,320,"Armors"), new Button(890,400,"Back"), new Button(890,200,'Bargain'), new Button(890,360,'Spells'), new Button(890,160,'Sell Item')]
         if (this.statButtons == null){
             this.statButtons = [new Button(180,300,'Strength',150),new Button(340,300,'Intelligence',150),new Button(500,300,'Dexterity',150),
             new Button(660,300,'Constitution',150),new Button(255,340,'Wisdom',150),new Button(415,340,'Perception',150),new Button(575,340,'Charisma',150)]
@@ -337,7 +337,16 @@ class CanvasRenderer {
         ctx.drawImage(moneyBagImg(),105,400)
         new Txt(player.getState().hp+"/"+player.getState().max_hp,185,2,'#000000',20).draw()
         new Txt("Gold -- "+player.getState().gold,60,30).draw()
-        for (let i=0; i<this.mainButtons.length; i++){this.mainButtons[i].draw()}
+        for (let i=0; i<this.mainButtons.length; i++){
+            if (i == 3){
+                if (player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
+                    this.mainButtons[i].draw()
+                }
+            }
+            else{
+                this.mainButtons[i].draw()
+            }
+        }
         ctx.drawImage(pathImg(),800,0)
         ctx.drawImage(pathImg(),800,200)
         ctx.beginPath()
@@ -385,15 +394,16 @@ class CanvasRenderer {
     drawInstructions(){
         drawRect('#007d00',0,0,1000,600)
         this.backButton.draw()
+        new Txt('How to Play',500,200,'#000000',36).draw()
+        new Txt('___________',500,200,'#000000',36).draw()
+        new Txt('w,a,s,d keys to move',500,275).draw()
+        new Txt("press the 'e' key on your keyboard when the",500,325).draw()
+        new Txt("'press e' text shows above the players head to interact",500,350).draw()
     }
     drawMenu(){
         drawRect('#007d00',0,0,1000,600)
         drawRect('#7d7d7d',432.5,200,135,200)
         for (let i=0;i<this.menuButtons.length;i++){this.menuButtons[i].draw()}
-    }
-    drawSettings(){
-        drawRect('#007d00',0,0,1000,600)
-        this.backButton.draw()
     }
     drawInventory(){
         drawRect('#007d00',0,0,1000,600)
@@ -440,7 +450,16 @@ class CanvasRenderer {
             new Txt(player.getState().hp+"/"+player.getState().max_hp,185,2,'#ffffff',20).draw()
             new Txt("Gold -- "+player.getState().gold,60,30,'#ffffff').draw()
             drawRect('#ff0000',5,5,(player.getState().hp/player.getState().max_hp)*150,20)
-            for (let i=0; i<this.mainButtons.length; i++){this.mainButtons[i].draw()}
+            for (let i=0; i<this.mainButtons.length; i++){
+                if (i == 3){
+                    if (player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
+                        this.mainButtons[i].draw()
+                    }
+                }
+                else{
+                    this.mainButtons[i].draw()
+                }
+            }
         }
     }
     drawDefeatScreen(){
@@ -449,6 +468,20 @@ class CanvasRenderer {
             mainText[i].draw()
         }
         this.nextButton.draw()
+    }
+    drawStats(){
+        let info = player.getState()
+        let stats = ['Strength', 'Intelligence', 'Dexterity', 'Constitution', 'Wisdom', 'Perception', 'Charisma']
+        drawRect('#007d00',0,0,1000,600)
+        this.backButton.draw()
+        new Txt('Your stats:',500,10,'#000000',36).draw()
+        new Txt('___________',500,10,'#000000',36)
+        new Txt('HP -- '+info.hp+'/'+info.max_hp,500,65).draw()
+        new Txt('Gold -- '+info.gold,500,100).draw()
+        for (let i=0; i<stats.length; i++){
+            let bonus = stats[i].toLowerCase()+'Bonus'
+            new Txt(stats[i]+' -- '+info[stats[i].toLowerCase()]+'    ||    Bonus:  '+info[bonus],500,135+i*35).draw()
+        }
     }
     drawGameOver(){
         drawRect('#007d00',0,0,1000,600)
@@ -553,7 +586,7 @@ class Item{
         if (this.move == false){
             const { pageX: x, pageY: y } = e
             if (this.slot != 'weapon' && this.slot != 'armor'){
-                if (x>=100+this.slotX*90 && x<=190+this.slotX*90 && y>=this.slotY*90 && y<=this.slotY*90+90){
+                if (x>=100+this.slotX*90 && x<=190+this.slotX*90 && y>=this.slotY*90+10 && y<=this.slotY*90+100){
                     return true
                 }
             }
@@ -638,6 +671,7 @@ class Room{
                         room = this.southRoom
                         data.setItem('room',room)
                         if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
+                        storage.saveRooms(rooms)
                         player.getState().y = 125
                         renderer.drawDungeon()
                     }
@@ -660,6 +694,7 @@ class Room{
                 if (y<20){
                     room = this.northRoom
                     if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
+                    storage.saveRooms(rooms)
                     data.setItem('room',room)
                     player.getState().y = 400
                     renderer.drawDungeon()
@@ -683,6 +718,7 @@ class Room{
                     room = this.westRoom
                     data.setItem('room',room)
                     if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
+                    storage.saveRooms(rooms)
                     player.getState().x = 775
                     renderer.drawDungeon()
                 }
@@ -705,6 +741,7 @@ class Room{
                     room = this.eastRoom
                     data.setItem('room',room)
                     if (rooms[room].monster == undefined){rooms[room].monster = monsterGenerator()}
+                    storage.saveRooms(rooms)
                     player.getState().x = 150
                     renderer.drawDungeon()
                 }
@@ -895,7 +932,8 @@ function Roll(dice,min=false,sides=6){
 function monsterGenerator(){
     const chance = Math.random()
     if (chance > 0.79){
-        const type = Roll(1,false,5)
+        console.log('generating...')
+        const type = Roll(1,false,5).total
         if(type == 1){return new Skeleton()}
         if(type == 2){return new Slime()}
         if(type == 3){return new Goblin()}
@@ -908,7 +946,7 @@ function monsterGenerator(){
 const storage = new Storage()
 
 const playerData = storage.loadPlayer()
-  
+    
 const player = playerData 
     ? Character.fromJSON(playerData) 
     : new Character()
@@ -973,20 +1011,20 @@ catch{}
 
 var inInstructions = JSON.parse(data.getItem('inInstructions'))
 var inMenu = JSON.parse(data.getItem('inMenu'))
-var inSettings = JSON.parse(data.getItem('inSettings'))
 var inInventory = JSON.parse(data.getItem('inInventory'))
 var room = data.getItem('room')
+var inStats = JSON.parse(data.getItem('inStats'))
 if (inInstructions == null){
     inInstructions = false
     inMenu = false
-    inSettings = false
     inInventory = false
+    inStats = false
     room = 0
     data.setItem('inInstructions',false)
-    data.setItem('inSettings', false)
     data.setItem('inMenu',false)
     data.setItem('inInventory',false)
     data.setItem('room',0)
+    data.setItem('inStats',false)
 }
 var rooms = storage.load('rooms')
 if (rooms == null){
@@ -1052,12 +1090,10 @@ else{
     rooms = array
     storage.saveRooms(rooms)
 }
-console.log(rooms)
 if (!player.coords.x || !player.coords.y) {
     player.setState({ x: 550, y: 350, items:[], weapon:'fists', armor:'none', armorClass:8, minDmg:1, maxDmg:3, xp:0 });
 }
 storage.savePlayer(player)
-
 const controls = new Controls()
 controls.on('up', () => player.moveUp())
 controls.on('down', () => player.moveDown())
@@ -1094,22 +1130,22 @@ window.addEventListener('mousemove',function(e){
     }
 })
 window.addEventListener('click',function(e){
-    if (inSettings == true){
-        const clicked = renderer.backButton.wasClicked(e)
-        if (clicked == true){
-            inSettings = false
-            data.setItem('inSettings',false)
-            if (page == 'town'){renderer.drawMenu()}
-            else{renderer.drawMainMenu()}
-        }
-    }
-    else if (inInstructions == true){
+    if (inInstructions == true){
         const clicked = renderer.backButton.wasClicked(e)
         if (clicked == true){
             inInstructions = false
             data.setItem('inInstructions',false)
             if (page == 'town'){renderer.drawMenu()}
             else{renderer.drawMainMenu()}
+        }
+    }
+    else if (inStats == true){
+        const clicked = renderer.backButton.wasClicked(e)
+        if (clicked == true){
+            inStats = false
+            data.setItem('inStats',false)
+            if (page == 'town'){renderer.drawTown({x: player.getState().x, y: player.getState().y})}
+            else{renderer.drawDungeon()}
         }
     }
     else if (inMenu == true){
@@ -1125,11 +1161,6 @@ window.addEventListener('click',function(e){
                 inInstructions = true
                 data.setItem('inInstructions',true)
                 renderer.drawInstructions()
-            }
-            if (clicked.text == 'Settings'){
-                inSettings = true
-                data.setItem('inSettings',true)
-                renderer.drawSettings()
             }
         }
     }
@@ -1160,11 +1191,6 @@ window.addEventListener('click',function(e){
                 data.setItem('inInstructions',true)
                 renderer.drawInstructions()
             }
-            if (clicked.text == 'Settings'){
-                inSettings = true
-                data.setItem('inSettings',true)
-                renderer.drawSettings()
-            }
         }
     }
     else if(page == 'character setup'){
@@ -1181,8 +1207,17 @@ window.addEventListener('click',function(e){
                     data.setItem('step',4)
                     roll = Roll(20)
                     storage.saveRoll(roll)
-                    player.assignAttr('gold',roll.total)
                     mainText = [new Txt('Rolling for your gold you got a total of '+roll.total,500,0), new Txt('So you get '+roll.total+' gold to start with',500,30)]
+                    player.assignAttr('gold',roll.total)
+                    if (player.getState().charisma>15){
+                        mainText.push(new Txt('But since you have such a high charisma I will',500,60))
+                        mainText.push(new Txt('add the roll of 5 6-sided dice to your total',500,90))
+                        let secondRoll = Roll(5,false)
+                        let total = roll.total+secondRoll.total
+                        mainText.push(new Txt('Rolling the dice you get '+secondRoll.rolls+' for a total of '+secondRoll.total,500,120))
+                        mainText.push(new Txt('So you now get to start with a total of '+total+' gold',500,150))
+                        player.getState().gold = total
+                    }
                     storage.saveText(mainText)
                     storage.savePlayer(player)
                     renderer.drawSetup()
@@ -1229,7 +1264,7 @@ window.addEventListener('click',function(e){
                     player.assignAttr('max_hp',player.getState().hp)
                     mainText = [new Txt("Rolling for your starting hitpoints you got "+roll.rolls+" for a sum of "+roll.total,500,0), 
                     new Txt('plus your constitution of '+player.getState().constitution+' multiplied by 2('+player.getState().constitution*2+')',500,30),
-                    new Txt('gives you a total of '+player.hp,500,60),new Txt("So your starting hitpoints is "+player.getState().max_hp,500,90)]
+                    new Txt('gives you a total of '+player.getState().hp,500,60),new Txt("So your starting hitpoints is "+player.getState().max_hp,500,90)]
                     storage.savePlayer(player)
                     storage.saveText(mainText)
                 }
@@ -1244,6 +1279,9 @@ window.addEventListener('click',function(e){
                 page = 'town'
                 data.setItem('page','town')
                 renderer.drawTown({x: player.getState().x, y: player.getState().y })
+            }
+            else if (clicked.text == 'Bargain' || clicked.text == 'Spells' || clicked.text == 'Sell Item'){
+                this.alert('Coming Soon!')
             }
             else{
                 renderer.displayedShopItems = clicked.text.toLowerCase()
@@ -1287,6 +1325,23 @@ window.addEventListener('click',function(e){
                 data.setItem('inInventory',true)
                 renderer.drawInventory()
             }
+            if (clicked.text == 'Stats'){
+                inStats = true
+                data.setItem('inStats',true)
+                renderer.drawStats()
+            }
+            if (clicked.text == 'Drink Healing Potion' && player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
+                const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
+                player.getState().items.splice(player.getState().items.indexOf(potion),1)
+                roll = Roll(5,false,6)
+                const total = roll.total+player.getState().constitutionBonus
+                player.getState().hp += total
+                if (player.getState().hp>player.getState().max_hp){
+                    player.getState().hp = player.getState().max_hp
+                }
+                storage.savePlayer(player)
+                renderer.drawTown({x: player.getState().x, y: player.getState().y})
+            }
         }
     }
     else if (page == 'dungeon'){
@@ -1301,6 +1356,23 @@ window.addEventListener('click',function(e){
                 inInventory = true
                 data.setItem('inInventory',true)
                 renderer.drawInventory()
+            }
+            if (clicked.text == 'Stats'){
+                inStats = true
+                data.setItem('inStats',true)
+                renderer.drawStats()
+            }
+            if (clicked.text == 'Drink Healing Potion' && player.getState().hp<player.getState().max_hp && player.getState().items.find(item => item.name === 'Healing Potion(3)')){
+                const potion = player.getState().items.find(item => item.name === 'Healing Potion(3)')
+                player.getState().items.splice(player.getState().items.indexOf(potion),1)
+                roll = Roll(5,false,6)
+                const total = roll.total+player.getState().constitutionBonus
+                player.getState().hp += total
+                if (player.getState().hp>player.getState().max_hp){
+                    player.getState().hp = player.getState().max_hp
+                }
+                storage.savePlayer(player)
+                renderer.drawDungeon()
             }
         }
     }
@@ -1547,8 +1619,8 @@ window.addEventListener('click',function(e){
 if (inInstructions == true){
     renderer.drawInstructions()
 }
-else if (inSettings == true){
-    renderer.drawSettings()
+else if (inStats == true){
+    renderer.drawStats()
 }
 else if (inInventory == true){
     renderer.drawInventory()
@@ -1585,7 +1657,6 @@ else if (page == 'dungeon' || page == 'battle'){
     for (let i=0; i<100; i++){
         setTimeout(() => {renderer.drawDungeon()},i*10)
     }
-    console.log(rooms[room].monster)
 }
 else if (page == 'defeat'){
     renderer.drawDefeatScreen()
