@@ -1,8 +1,4 @@
-function image(src){
-    const img = new Image()
-    img.src = src
-    return img
-}
+function image(src){const img = new Image(); img.src = src; return img}
 const HeroImg = image('Images/hero.png')
 const ChatImg = image('Images/chat.png')
 const ShopImg = image('Images/shop.png')
@@ -31,6 +27,8 @@ const BugBearImg = image('Images/bear.png')
 const SkeletonImg = image('Images/skeleton.png')
 const TrollImg = image('Images/troll.png')
 const MagicMissleImg = image('Images/missle-spell.png')
+const ClosedChest1 = image('Images/closed-chest-1.png')
+const OpenedChest1 = image('Images/opened-chest-1.png')
 export function heroImg(){return HeroImg}
 export function chatImg(){return ChatImg}
 export function shopImg(){return ShopImg}
@@ -59,3 +57,5 @@ export function bugBearImg(){return BugBearImg}
 export function skeletonImg(){return SkeletonImg}
 export function trollImg(){return TrollImg}
 export function magicMissleImg(){return MagicMissleImg}
+export function closedChest1(){return ClosedChest1}
+export function openedChest1(){return OpenedChest1}
