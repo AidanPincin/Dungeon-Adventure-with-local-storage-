@@ -56,7 +56,7 @@ class Character{
     }
 
     moveUp(n = this.#defaultMoveN) {
-        if (page == 'town'){
+        if (page == 'town' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
             if(this.#state.y>0){this.setState({ y: this.#state.y - n })}
             if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
                 this.setState({ y: this.#state.y + n })
@@ -65,13 +65,11 @@ class Character{
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else{
-            if(this.#state.y>0){this.setState({ y: this.#state.y - n })}
-        }
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ y: this.#state.y - n })}
     }
 
     moveDown(n = this.#defaultMoveN) {
-        if (page == 'town'){
+        if (page == 'town' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
             if(this.#state.y<525){this.setState({ y: this.#state.y + n })}
             if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
                 this.setState({ y: this.#state.y - n })
@@ -80,25 +78,21 @@ class Character{
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else{
-            if(this.#state.y<525){this.setState({ y: this.#state.y + n })}
-        }
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ y: this.#state.y + n })}
     }
 
     moveRight(n = this.#defaultMoveN) {
-        if (page == 'town'){
+        if (page == 'town' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
             if(this.#state.x<925){this.setState({ x: this.#state.x + n })}
             if (this.#state.x<=250 && this.#state.y>=180){
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else{
-            if(this.#state.x<925){this.setState({ x: this.#state.x + n })}
-        }
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ x: this.#state.x + n })}
     }
 
     moveLeft(n = this.#defaultMoveN) {
-        if (page == 'town'){
+        if (page == 'town' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
             if(this.#state.x>0){this.setState({ x: this.#state.x - n })}
             if(this.#state.x<=190 && this.#state.y<=490 && this.#state.y>=230){
                 this.setState({ x: this.#state.x + n })
@@ -107,9 +101,7 @@ class Character{
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else{
-            if(this.#state.x>0){this.setState({ x: this.#state.x - n })} 
-        }
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ x: this.#state.x - n })}
     }
     interact(){
         if (page == 'town'){
@@ -1147,7 +1139,7 @@ player.on('state:change', (state) => {
 })
 
 window.addEventListener('keydown', (e) => {
-    if (page == 'town' || page == 'dungeon'){controls.keyChange(e.key, true)}
+    controls.keyChange(e.key, true)
     if (e.key == 'r' && page == 'game over'){data.clear(); location.reload()}
 })
 window.addEventListener('keyup', (e) => {
@@ -1168,7 +1160,7 @@ window.addEventListener('click',function(e){
         if (clicked == true){
             inInstructions = false
             data.setItem('inInstructions',false)
-            if (page == 'town'){renderer.drawMenu()}
+            if (page == 'town' || page == 'dungeon'){renderer.drawMenu()}
             else{renderer.drawMainMenu()}
         }
     }
