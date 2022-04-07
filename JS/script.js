@@ -1,6 +1,6 @@
 import { heroImg, moneyBagImg, manImg, shopImg, chatImg, armorImg, battleAxeImg, chainMailArmorImg, clothArmorImg, daggerImg, fistImg, greatSwordImg, healthPotionImg,
 leatherArmorImg, longSwordImg, morningstarImg, plateMailArmorImg, scaleMailArmorImg, sharpSwordImg, studdedLeatherArmorImg, pathImg, goblinImg, bigHeroImg, bugBearImg,
-skeletonImg, slimeImg, trollImg, magicMissleImg } from './images.js'
+skeletonImg, slimeImg, trollImg, magicMissleImg, closedChest1, openedChest1 } from './images.js'
 class Character{
     #id;
     #state = {};
@@ -65,7 +65,13 @@ class Character{
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ y: this.#state.y - n })}
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
+            if (rooms[room].chest != undefined){
+                if(this.#state.y>200){this.setState({ y: this.#state.y - n })}
+                else if(this.#state.x>200){this.setState({ y: this.#state.y - n })}
+            }
+            else{this.setState({ y: this.#state.y - n })}
+        }
     }
 
     moveDown(n = this.#defaultMoveN) {
@@ -101,7 +107,13 @@ class Character{
                 new Txt("press 'e'",this.#state.x+30,this.#state.y-30).draw()
             }
         }
-        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){this.setState({ x: this.#state.x - n })}
+        else if (page == 'dungeon' && inMenu == false && inInstructions == false && inInventory == false && inStats == false){
+            if (rooms[room].chest != undefined){
+                if(this.#state.x>230){this.setState({ x: this.#state.x - n })}
+                else if(this.#state.y>200){this.setState({ x: this.#state.x - n })}
+            }
+            else{this.setState({ x: this.#state.x - n })}
+        }
     }
     interact(){
         if (page == 'town'){
@@ -401,8 +413,12 @@ class CanvasRenderer {
     drawInventory(){
         drawRect('#007d00',0,0,1000,600)
         this.backButton.draw()
+        let names = []
         for (let i=0; i<player.getState().items.length; i++){
-            player.getState().items[i].draw()
+            if (names.find(name => name === player.getState().items[i].name) == undefined){
+                player.getState().items[i].draw()
+                names.push(player.getState().items[i].name)
+            }
         }
         for (let i=0; i<6; i++){
             drawRect('#000000',i*90+90,0,1,450)
@@ -631,7 +647,7 @@ class Item{
     }
 }
 class Room{
-    constructor(north,south,west,east,northRoom = undefined, southRoom = undefined, westRoom = undefined, eastRoom = undefined, monster = undefined){
+    constructor(north,south,west,east,northRoom = undefined, southRoom = undefined, westRoom = undefined, eastRoom = undefined, monster = undefined, chest = undefined){
         this.north = north
         this.south = south
         this.west = west
@@ -641,6 +657,7 @@ class Room{
         this.westRoom = westRoom
         this.eastRoom = eastRoom
         this.monster = monster
+        this.chest = chest
     }
     draw(){
         if (this.monster != undefined){
@@ -650,6 +667,7 @@ class Room{
         }
         else{
             drawRect('#7d7d7d',150,125,700,350)
+            if (this.chest != undefined){this.chest.draw()}
             var { x: x, y: y } = player.getState()
             if (this.south == true){
                 drawRect('#7d7d7d',462.5,475,75,125)
@@ -754,6 +772,33 @@ class Room{
             }
         }
 
+    }
+}
+class Chest{
+    constructor(gold,items){
+        this.gold = gold
+        if (!items){this.items=[]}
+        else{this.items = items}
+        this.opened = false
+    }
+    draw(){
+        if(this.opened == false){
+            ctx.drawImage(closedChest1(),150,125)
+            let state = player.getState()
+            if(state.x<=310 && state.y<=280){new Txt("press 'e'", state.x+40,state.y-30).draw()}
+        }
+        else{ctx.drawImage(openedChest1(),150,125)}
+    }
+    wasOpened(){
+        let state = player.getState()
+        if(state.x<=310 && state.y<=280){
+            this.opened = true
+            state.gold += this.gold
+            for (let i=0; i<this.items.length; i++){state.items.push(this.items[i])}
+        }
+        storage.savePlayer(player)
+        storage.saveRooms(rooms)
+        renderer.drawDungeon()
     }
 }
 function generateMonsterChoice(){
@@ -1055,42 +1100,42 @@ var rooms = storage.load('rooms')
 if (rooms == null){
     rooms = [new Room(true,true,false,false,1,'town',undefined,undefined), new Room(true,true,true,false,2,0,3,undefined,new Skeleton()), new Room(true,true,true,true,12,1,7,8,new Slime()),
     new Room(false,false,true,true,undefined,undefined,4,1,new Goblin()), new Room(true,false,true,true,6,undefined,5,3,new Goblin()), //4
-    new Room(false,false,false,true,undefined,undefined,undefined,4,new Troll()), new Room(true,true,false,true,20,4,undefined,7,new Goblin()), //6
+    new Room(false,false,false,true,undefined,undefined,undefined,4,new Troll(),new Chest(Math.round(Math.random()*15+5))), new Room(true,true,false,true,20,4,undefined,7,new Goblin()), //6
     new Room(false,false,true,true,undefined,undefined,6,2), new Room(false,false,true,true,undefined,undefined,2,9), //8
     new Room(false,true,true,true,undefined,10,8,15), new Room(true,true,false,false,9,11,undefined,undefined,new Skeleton()), //10
-    new Room(true,false,false,false,10,undefined,undefined,undefined,new Troll()), new Room(true,true,false,true,37,2,undefined,13,new Troll()), //12
+    new Room(true,false,false,false,10,undefined,undefined,undefined,new Troll(),new Chest(Math.round(Math.random()*15+5))), new Room(true,true,false,true,37,2,undefined,13,new Troll()), //12
     new Room(false,false,true,true,undefined,undefined,12,14), new Room(true,true,true,true,44,15,13,19,new Slime()), //14
     new Room(true,true,true,true,14,16,9,18), new Room(true,false,false,true,15,undefined,undefined,17,new Troll()), //16
-    new Room(false,false,true,false,undefined,undefined,16,undefined,new Skeleton()), new Room(false,false,true,false,undefined,undefined,15,undefined,new BugBear()), //18
+    new Room(false,false,true,false,undefined,undefined,16,undefined,new Skeleton(),new Chest(Math.round(Math.random()*15+5))), new Room(false,false,true,false,undefined,undefined,15,undefined,new BugBear(),new Chest(Math.round(Math.random()*15+5))), //18
     new Room(true,false,true,false,45,undefined,14,undefined,new Slime()), new Room(true,true,false,false,21,6),  //20
-    new Room(true,true,true,false,23,20,22), new Room(false,false,false,true,undefined,undefined,undefined,21,new BugBear()),  //22
+    new Room(true,true,true,false,23,20,22), new Room(false,false,false,true,undefined,undefined,undefined,21,new BugBear(),new Chest(Math.round(Math.random()*15+5))),  //22
     new Room(true,true,false,false,24,21), new Room(true,true,false,true,25,23,undefined,35,new Troll()), //24
     new Room(true,true,false,false,26,24), new Room(false,true,false,true,undefined,25,undefined,27,new Skeleton()),  //26
     new Room(false,false,true,true,undefined,undefined,26,28), new Room(false,true,true,false,undefined,29,27,undefined,new Goblin()),  //28
     new Room(true,true,true,true,28,34,32,30), new Room(false,false,true,true,undefined,undefined,29,31),  //30
-    new Room(false,false,true,false,undefined,undefined,30,undefined,new BugBear()), new Room(false,false,true,true,undefined,undefined,33,29), //32
-    new Room(false,false,false,true,undefined,undefined,undefined,32,new BugBear()), new Room(true,true,true,true,29,37,35,38,new BugBear()),  //34
-    new Room(false,true,true,true,undefined,36,24,34), new Room(true,false,false,false,35,undefined,undefined,undefined,new Troll()), //36
+    new Room(false,false,true,false,undefined,undefined,30,undefined,new BugBear(),new Chest(Math.round(Math.random()*15+5))), new Room(false,false,true,true,undefined,undefined,33,29), //32
+    new Room(false,false,false,true,undefined,undefined,undefined,32,new BugBear(),new Chest(Math.round(Math.random()*15+5))), new Room(true,true,true,true,29,37,35,38,new BugBear(),new Chest(Math.round(Math.random()*15+5))),  //34
+    new Room(false,true,true,true,undefined,36,24,34), new Room(true,false,false,false,35,undefined,undefined,undefined,new Troll(),new Chest(Math.round(Math.random()*15+5))), //36
     new Room(true,true,false,false,34,12), new Room(false,true,true,true,undefined,39,34,41),   //38
-    new Room(true,true,false,false,38,40), new Room(true,false,false,false,39,undefined,undefined,undefined,new Slime()),  //40
+    new Room(true,true,false,false,38,40), new Room(true,false,false,false,39,undefined,undefined,undefined,new Slime(),new Chest(Math.round(Math.random()*15+5))),  //40
     new Room(false,true,true,true,undefined,42,38,48,new Skeleton()), new Room(true,true,false,false,41,43),  //42
     new Room(true,true,false,false,42,44), new Room(true,true,false,false,43,14,undefined,undefined,new Goblin()),  //44
     new Room(true,true,false,false,46,19), new Room(true,true,false,false,47,45,undefined,undefined,new Goblin()),   //46
-    new Room(true,true,true,false,49,46,48), new Room(false,false,true,true,undefined,undefined,41,47),   //48
+    new Room(true,true,true,false,49,46,48,undefined,undefined,new Chest(Math.round(Math.random()*15+5))), new Room(false,false,true,true,undefined,undefined,41,47),   //48
     new Room(true,true,false,false,50,47,undefined,undefined,new Slime()), new Room(false,true,true,true,undefined,49,52,51,new BugBear()),  //50
-    new Room(false,false,true,false,undefined,undefined,50,undefined,new Troll()), new Room(true,false,false,true,53,undefined,undefined,50,new Skeleton()),   //52
+    new Room(false,false,true,false,undefined,undefined,50,undefined,new Troll(),new Chest(Math.round(Math.random()*15+5))), new Room(true,false,false,true,53,undefined,undefined,50,new Skeleton()),   //52
     new Room(true,true,true,true,57,52,58,54,new BugBear()), new Room(true,false,true,true,56,undefined,53,55),   //54
-    new Room(false,false,true,false,undefined,undefined,54,undefined,new Slime()), new Room(false,true,false,false,undefined,54,undefined,new Skeleton()),   //56
+    new Room(false,false,true,false,undefined,undefined,54,undefined,new Slime(),new Chest(Math.round(Math.random()*15+5))), new Room(false,true,false,false,undefined,54,undefined,new Skeleton()),   //56
     new Room(false,true,false,false,undefined,53,undefined,undefined,new Troll()), new Room(true,false,true,true,59,undefined,60,53),    //58
-    new Room(false,true,false,false,undefined,58,undefined,undefined,new Goblin()), new Room(true,false,false,true,61,undefined,undefined,58,new Skeleton()),   //60
-    new Room(false,true,false,false,undefined,60,undefined,undefined,new BugBear())]  //61
+    new Room(false,true,false,false,undefined,58,undefined,undefined,new Goblin(),new Chest(Math.round(Math.random()*15+5))), new Room(true,false,false,true,61,undefined,undefined,58,new Skeleton()),   //60
+    new Room(false,true,false,false,undefined,60,undefined,undefined,new BugBear(),new Chest(Math.round(Math.random()*15+5)))]  //61
     storage.saveRooms(rooms)
 }
 else{
     const array = []
     for (let i=0; i<rooms.length; i++){
         const monsterInfo = rooms[i].monster
-        var newMonster = undefined
+        let newMonster = undefined
         if (monsterInfo != undefined){
             newMonster = new Monster(monsterInfo.name,monsterInfo.dexterity,monsterInfo.gold,monsterInfo.xp,monsterInfo.dice)
             newMonster.hp = monsterInfo.hp
@@ -1109,7 +1154,13 @@ else{
             if(monsterInfo.name == 'slime'){newMonster.img = slimeImg()}
             if(monsterInfo.name == 'troll'){newMonster.img = trollImg()}
         }
-        const newRoom = new Room(rooms[i].north,rooms[i].south,rooms[i].west,rooms[i].east,rooms[i].northRoom,rooms[i].southRoom,rooms[i].westRoom,rooms[i].eastRoom,newMonster)
+        const chestInfo = rooms[i].chest
+        let newChest = undefined
+        if (chestInfo != undefined){
+            newChest = new Chest(chestInfo.gold,chestInfo.items)
+            newChest.opened = chestInfo.opened
+        }
+        const newRoom = new Room(rooms[i].north,rooms[i].south,rooms[i].west,rooms[i].east,rooms[i].northRoom,rooms[i].southRoom,rooms[i].westRoom,rooms[i].eastRoom,newMonster,newChest)
         array.push(newRoom)
     }
     rooms = array
@@ -1141,6 +1192,7 @@ player.on('state:change', (state) => {
 window.addEventListener('keydown', (e) => {
     controls.keyChange(e.key, true)
     if (e.key == 'r' && page == 'game over'){data.clear(); location.reload()}
+    if(rooms[room].chest != undefined && e.key == 'e'){rooms[room].chest.wasOpened()}
 })
 window.addEventListener('keyup', (e) => {
     controls.keyChange(e.key, false)
