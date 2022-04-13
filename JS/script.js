@@ -404,6 +404,7 @@ class CanvasRenderer {
         new Txt('w,a,s,d keys to move',500,275).draw()
         new Txt("press the 'e' key on your keyboard when the",500,325).draw()
         new Txt("'press e' text shows above the players head to interact",500,350).draw()
+        new Txt('Any blue rectangeles are buttons that you can click',500,400).draw()
     }
     drawMenu(){
         drawRect('#007d00',0,0,1000,600)
